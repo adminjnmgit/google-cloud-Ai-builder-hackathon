@@ -1,4 +1,11 @@
-"""Classify agent: Gemini Flash structured hits for reports the lexicon missed."""
+"""Classify agent: a second opinion from Gemini on the reports the lexicon did not match.
+
+The lexicon is deliberately strict, which keeps precision high but lets some real stories through
+(unusual phrasing, a new company name, a Hindi idiom in a translation). This agent looks only at
+those misses and may add hits; it never changes or removes a lexicon hit. Whatever it suggests is
+forced back into the lexicon's vocabulary (known variables, sectors and categories), so an event
+created here looks exactly like one created by a detector.
+"""
 
 from __future__ import annotations
 

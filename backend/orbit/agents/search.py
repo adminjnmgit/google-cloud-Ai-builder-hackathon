@@ -1,4 +1,9 @@
-"""Search agent: Vertex AI Search when configured, else local keyword ranking."""
+"""Search agent: find events by meaning when we can, by keyword when we cannot.
+
+Vertex AI Search (Discovery Engine) is used when ``ORBIT_SEARCH_DATA_STORE`` points at a data store
+that indexes the events. Without one, a plain keyword score over the recent feed does the job well
+enough for the owner page's search box.
+"""
 
 from __future__ import annotations
 

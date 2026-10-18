@@ -1,21 +1,28 @@
-"""Cluster agent: Gemini Flash merge suggestions for near-duplicate episodes."""
+"""Cluster agent: asks Gemini which same-variable episodes are really one story.
+
+The rule-based cluster step splits an episode whenever reports are more than four days apart. That is
+usually right, but a slow-burning story (a tariff that is announced, delayed, then imposed) ends up as
+two or three events. This agent only ever merges; it never splits what the rules joined, and it needs
+the model to be fairly sure before it does anything.
+"""
 
 from __future__ import annotations
 
 import logging
+from statistics import median
 from typing import Any
 
+from ..pipeline.lexicon import CATEGORIES, INDUSTRIES
 from .client import AiClient
 
 log = logging.getLogger(__name__)
 
+MIN_CONFIDENCE = 0.75
+MAX_EVENTS_SHOWN = 80  # enough context without a huge prompt; the newest events come first anyway
+
 
 def _merge_pair(keep: dict[str, Any], drop: dict[str, Any]) -> dict[str, Any]:
     """Fold ``drop`` into ``keep`` (same shape as pipeline.cluster output)."""
-    from statistics import median
-
-    from ..pipeline.lexicon import CATEGORIES, INDUSTRIES
-
     reports = sorted(
         keep['reports'] + drop['reports'],
         key=lambda r: r['date'],
@@ -65,7 +72,7 @@ def merge_episodes(events: list[dict[str, Any]], client: AiClient) -> list[dict[
             'first': e['first'],
             'last': e['last'],
         }
-        for e in events[:80]
+        for e in events[:MAX_EVENTS_SHOWN]
     ]
     data = client.generate_json(
         model=client.settings.lite_model,
@@ -90,7 +97,7 @@ def merge_episodes(events: list[dict[str, Any]], client: AiClient) -> list[dict[
             conf = float(item.get('confidence') or 0)
         except (TypeError, ValueError):
             conf = 0.0
-        if conf < 0.75:
+        if conf < MIN_CONFIDENCE:
             continue
         keep_id, drop_id = item.get('keep'), item.get('drop')
         if keep_id in dropped or drop_id in dropped:

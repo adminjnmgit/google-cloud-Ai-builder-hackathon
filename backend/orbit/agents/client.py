@@ -1,7 +1,13 @@
-"""Thin wrappers around Vertex Gemini and Cloud Translation.
+"""One small client the agents share for Gemini and Cloud Translation.
 
-Uses Application Default Credentials. When AI is disabled or a call fails, callers fall back
-to the lexicon pipeline so local/dev always works without GCP.
+Two ways to reach Gemini, picked from the settings:
+
+* **Vertex AI** (``GCP_PROJECT``) — what Cloud Run uses, through the service account. No key anywhere.
+* **Gemini Developer API** (``GEMINI_API_KEY``) — handy on a laptop that has no IAM role on the project.
+
+Every call returns ``None`` on failure instead of raising. The agents treat ``None`` as "skip this
+step", which is what keeps the pipeline and the pages working when the model is unavailable. The last
+failure is kept on ``last_error`` (with anything key-shaped masked) so an operator can see why.
 """
 
 from __future__ import annotations

@@ -1,4 +1,9 @@
-"""Brief agent: Gemini executive summaries for published events."""
+"""Brief agent: three short lines an owner can act on, per event.
+
+``what`` happened, ``soWhat`` it means for the sectors involved, ``watchNext`` for the follow-up,
+plus a 1-5 ``impact``. The pipeline writes briefs for the newest events at publish time; the rest
+are written on demand the first time someone opens them (``POST /api/agents/brief/<id>``).
+"""
 
 from __future__ import annotations
 

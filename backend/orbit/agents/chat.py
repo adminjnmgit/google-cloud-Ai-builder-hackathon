@@ -1,4 +1,8 @@
-"""Chat agent: Gemini Q&A grounded on the active event feed."""
+"""Chat agent: answers an owner's question from the published events, and nothing else.
+
+The model is shown the newest events (with their briefs when present) and told to cite the ones it
+used. If the answer is not in the feed it is expected to say so rather than guess.
+"""
 
 from __future__ import annotations
 

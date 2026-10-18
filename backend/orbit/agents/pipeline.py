@@ -1,4 +1,10 @@
-"""Batch agents: Translate → Classify (lexicon + Gemini) → Episode (+ merge) → Brief."""
+"""The batch pipeline with the AI agents slotted in around the rule-based core.
+
+    reports -> translate -> classify (lexicon, then Gemini for the misses) -> cluster (+ merge) -> brief
+
+Every agent step is optional. With AI off, or when a model call fails, this is exactly the old
+lexicon pipeline, so a bad day at the model provider can never take the feed down.
+"""
 
 from __future__ import annotations
 
@@ -27,7 +33,7 @@ def run_pipeline(
     *,
     ai: AiSettings | AiClient | None = None,
 ):
-    """reports → optional AI enrich → {meta, events}. Pure: no database, no I/O besides model calls."""
+    """Reports in, ``{meta, events}`` out. Touches no database; the only I/O is the model calls, if enabled."""
     reports = list(reports)
     if not reports:
         raise ValueError('No reports to process')

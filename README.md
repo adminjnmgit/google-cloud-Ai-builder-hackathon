@@ -8,9 +8,15 @@ in one MySQL database.
 
 ```
 jagran_biz (MySQL)  -->  pipeline  -->  orbit_events (MySQL)  -->  /api/data  -->  owner / analyst pages
-or a CSV export          classify +                                                      |
-                         cluster                          orbit_workspaces/profiles/tasks  <-- /api/workspace
+or a CSV export          translate,                                                      |
+                         classify,                        orbit_workspaces/profiles/tasks  <-- /api/workspace
+                         cluster, brief                   Gemini chat / brief / search     <-- /api/agents/*
 ```
+
+The rule-based pipeline does the heavy lifting. Gemini agents sit around it (translate the odd Hindi row, catch
+the stories the lexicon misses, merge split episodes, write a short brief per event, answer questions) and are
+switched off unless configured, so the product runs without any Google Cloud AI access at all. See
+[AI agents](#ai-agents) and `docs/diagrams/architecture-final.png`.
 
 ## Quick start (Windows, XAMPP)
 
@@ -62,6 +68,7 @@ Creating the app never touches the database: tables come from migrations, data f
 | `web.py` | Frontend pages, JSON error handlers, headers |
 | `errors.py` | Domain exceptions; `web.py` maps them to status codes |
 | `pipeline/` | The pure engine: reports in, events out, no database |
+| `agents/` | The Gemini agents and the one client they share; `agents/pipeline.py` is the engine with the agents slotted in |
 
 ## The pipeline
 
@@ -91,6 +98,34 @@ flask orbit export-seed           # rebuild that snapshot (events.json + events.
 ```
 
 To refresh on a schedule, run the first command from Windows Task Scheduler.
+
+## AI agents
+
+Six agents, all optional. The pipeline and every page behave exactly as before when they are off or when a
+model call fails; an agent that cannot answer simply skips its step.
+
+| Agent | Where it runs | Model | What it does |
+| --- | --- | --- | --- |
+| Translate | pipeline, before classify | Cloud Translation, else `gemini-3.5-flash-lite` | English for rows that still carry Devanagari; flagged `mt: true` like the offline translations |
+| Classify | pipeline, after the lexicon | `gemini-3.8-flash` | Looks only at reports the lexicon did not match and may add hits, forced back into the lexicon's variables, sectors and categories. Never touches a lexicon hit |
+| Cluster | pipeline, after cluster | `gemini-3.5-flash-lite` | Suggests merging same-variable episodes the 4-day gap split; applied only at confidence ≥ 0.75 and only ever merges |
+| Brief | pipeline (newest events) and on demand | `gemini-3.8-flash` | `what` / `soWhat` / `watchNext` and a 1–5 `impact`, stored on the run and served inline in `/api/data` as `event.brief` |
+| Chat | request time | `gemini-3.8-flash` | Answers from the published events only and cites the ids it used |
+| Search | request time | Vertex AI Search, else local keywords | Semantic search when a Discovery Engine data store is configured |
+
+Turn them on with `ORBIT_AI_ENABLED=1` and one way of reaching Gemini:
+
+- **Vertex AI** — `GCP_PROJECT=<project>`. This is what Cloud Run uses: the service's runtime service account needs
+  *Vertex AI User* and the Vertex AI API enabled. No key is stored anywhere. The newest Gemini models are served from
+  the `global` Vertex endpoint, which is the default (`ORBIT_VERTEX_LOCATION` overrides it).
+- **Gemini Developer API** — `GEMINI_API_KEY=<key>` from [AI Studio](https://aistudio.google.com/apikey). Meant for a
+  laptop that has no IAM role on the project. When both are set the key wins.
+
+`GET /api/agents` shows which backend is active and the key masked (`AIza…1234`); the key itself never leaves the
+process, is excluded from dataclass reprs and is scrubbed from error messages. Per-agent switches
+(`ORBIT_AI_TRANSLATE`, `_CLASSIFY`, `_CLUSTER`, `_BRIEF`), the model names and the budgets (`ORBIT_AI_CLASSIFY_MAX`,
+`ORBIT_AI_BRIEF_MAX`) are listed in `backend/.env.example`. Cloud Translation and Vertex AI Search need a billed
+project; without them the translate agent uses Gemini and search uses the local keyword fallback.
 
 ## Sectors
 
@@ -138,6 +173,10 @@ flask db check                               # fails if models.py and the migrat
 | `PUT /api/workspace/sector`, `/profile/<sector>`, `/tasks/<sector>` | Save state (JSON only) |
 | `DELETE /api/workspace/<sector>?part=profile\|tasks\|all` | Reset |
 | `GET /api/admin/pipeline/runs`, `POST /api/admin/pipeline/run` | Run history; start a run (`{"source": "jagran_biz"}` or a CSV upload in field `file`) |
+| `GET /api/agents` | The agent catalog and the active AI configuration (key masked) |
+| `POST /api/agents/chat` | `{"question": ..., "sector": ...}` → `{answer, citations, model}`; `error` carries a masked reason when the model could not answer |
+| `POST /api/agents/brief/<id>` | Write (or return the stored) brief for one event |
+| `GET /api/agents/search?q=` | Vertex AI Search or keyword fallback over recent events; `limit` up to 50 |
 
 Errors are JSON `{"error": ..., "message": ...}`. Admin endpoints need `X-Admin-Token` (or `Authorization: Bearer`)
 matching `ORBIT_ADMIN_TOKEN`. With no token set they only accept requests from the same machine.
@@ -192,3 +231,10 @@ gcloud run deploy jagran-orbit --source . --region asia-south1 --allow-unauthent
 `/api/health` is the readiness check. The service starts even if no feed is published yet (`feed` is null until
 `flask orbit seed` or `flask orbit pipeline run` has been applied to Cloud SQL). After the first deploy, load the
 schema and events into Cloud SQL, then the owner page at `/` works.
+
+To enable the agents on Cloud Run add `ORBIT_AI_ENABLED=1,GCP_PROJECT=<project>` to `--set-env-vars`, enable the
+Vertex AI API in that project and grant the service's runtime service account `roles/aiplatform.user`. Leave
+`GEMINI_API_KEY` unset there.
+
+Secrets never go in the image or the repo: `backend/.env` is git-ignored and excluded by `.dockerignore` /
+`.gcloudignore`, and a gitleaks workflow scans every push and pull request.

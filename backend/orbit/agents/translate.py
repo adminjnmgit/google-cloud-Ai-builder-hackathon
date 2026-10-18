@@ -1,4 +1,10 @@
-"""Translate agent: Cloud Translation API (or Gemini Flash) for non-English report text."""
+"""Translate agent: English for any report that still carries Devanagari (or another Indic script).
+
+Most rows already have an English headline from the newsroom or from the offline machine
+translations. This covers the rest, right before classify, so the detectors see English text.
+Translated rows are flagged ``machine=True`` like the offline ones, so they are never picked as an
+event's face when a human-written headline exists.
+"""
 
 from __future__ import annotations
 
