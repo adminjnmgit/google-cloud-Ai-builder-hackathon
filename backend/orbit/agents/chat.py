@@ -50,7 +50,10 @@ def answer_question(
             system='Answer from the events only. Be concise.',
             prompt=f'Sector: {sector}\nQuestion: {question}\nEvents: {context!r}',
         )
-        return {'answer': text or 'No answer.', 'model': client.settings.flash_model, 'citations': []}
+        out: dict[str, Any] = {'answer': text or 'No answer.', 'model': client.settings.flash_model, 'citations': []}
+        if not text and client.last_error:
+            out['error'] = client.last_error
+        return out
 
     citations = [str(c) for c in (data.get('citations') or []) if c]
     return {

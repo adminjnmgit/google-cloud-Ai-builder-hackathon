@@ -86,7 +86,8 @@ def brief(code: str) -> Response:
     row = event_dict(found, with_reports=False)
     generated = brief_event(row, client)
     if generated is None:
-        abort(503, description='Brief agent is unavailable (enable ORBIT_AI_ENABLED and GCP_PROJECT)')
+        reason = client.last_error or 'enable ORBIT_AI_ENABLED and set GCP_PROJECT or GEMINI_API_KEY'
+        abort(503, description=f'Brief agent is unavailable: {reason}')
     meta = dict(run.meta or {})
     briefs = dict(meta.get('briefs') or {})
     briefs[code] = generated

@@ -14,6 +14,15 @@ from typing import Any
 
 log = logging.getLogger(__name__)
 
+_KEYISH = re.compile(r'AIza[0-9A-Za-z_-]{20,}|ya29\.[0-9A-Za-z_-]+')
+
+
+def _summarise(error: Exception, *, model: str, backend: str) -> str:
+    """One line for operators: status + message, with any token-like strings masked."""
+    message = str(error).replace('\n', ' ')
+    message = _KEYISH.sub('***', message)
+    return f'{backend} {model}: {type(error).__name__}: {message[:300]}'
+
 
 @dataclass(frozen=True, slots=True)
 class AiSettings:
@@ -41,6 +50,7 @@ class AiClient:
         self.settings = settings
         self._genai = None
         self._translate = None
+        self.last_error: str | None = None  # short, secret-free summary of the most recent failure
 
     @property
     def ready(self) -> bool:
@@ -76,9 +86,11 @@ class AiClient:
                 config=types.GenerateContentConfig(**config_kwargs),
             )
             text = (response.text or '').strip()
+            self.last_error = None
             return text or None
-        except Exception:
+        except Exception as error:
             log.exception('Gemini generate_content failed (model=%s)', model)
+            self.last_error = _summarise(error, model=model, backend=self.backend)
             return None
 
     def generate_json(
