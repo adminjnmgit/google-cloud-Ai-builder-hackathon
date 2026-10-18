@@ -14,6 +14,7 @@ from flask.cli import AppGroup
 from sqlalchemy import select
 
 from . import database, runs
+from .agents.catalog import AGENTS
 from .config import Settings
 from .enums import Source
 from .errors import OrbitError
@@ -45,6 +46,14 @@ def init_db() -> None:
     except OrbitError as error:
         raise _fail(error) from error
     click.echo(f'{"Created" if created else "Found"} database {settings.database.name}; schema is up to date.')
+
+
+@orbit.command('agents')
+def agents() -> None:
+    """List the named agents (batch vs serve) and what they do in this MVP."""
+    click.echo(f'{"id":12} {"clock":6}  role')
+    for agent in AGENTS:
+        click.echo(f'{agent.id:12} {agent.clock:6}  {agent.role}')
 
 
 @orbit.command('seed')

@@ -35,9 +35,17 @@ def build_payload(run: PipelineRun) -> Payload:
         .options(selectinload(Event.reports), selectinload(Event.tags))
     ).all()
     meta = dict(run.meta or {})
+    briefs = meta.get('briefs') or {}
     meta.update(events=len(events), run=run.id, refreshed=date_out(run.finished_at or run.started_at))
+    payload_events = []
+    for event in events:
+        row = event_dict(event)
+        brief = briefs.get(event.code)
+        if brief:
+            row['brief'] = brief
+        payload_events.append(row)
     body = json.dumps(
-        {'meta': meta, 'events': [event_dict(e) for e in events]},
+        {'meta': meta, 'events': payload_events},
         ensure_ascii=False,
         separators=(',', ':'),
         allow_nan=False,

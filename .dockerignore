@@ -13,7 +13,6 @@ backend/instance
 backend/tests
 docs
 frontend/tests
-frontend/owner/data
 tests
 *.md
 *.png

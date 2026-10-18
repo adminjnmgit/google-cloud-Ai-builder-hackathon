@@ -1,0 +1,60 @@
+"""Chat agent: Gemini Q&A grounded on the active event feed."""
+
+from __future__ import annotations
+
+from typing import Any
+
+from .client import AiClient
+
+
+def answer_question(
+    client: AiClient,
+    *,
+    question: str,
+    sector: str = '',
+    events: list[dict[str, Any]],
+) -> dict[str, Any]:
+    if not client.ready:
+        return {
+            'answer': 'AI is not configured. Set ORBIT_AI_ENABLED=1 and GCP_PROJECT, then retry.',
+            'model': None,
+            'citations': [],
+        }
+
+    context = [
+        {
+            'id': e.get('id') or e.get('code'),
+            'label': e.get('label'),
+            'inds': e.get('inds'),
+            'dir': e.get('dir'),
+            'mag': e.get('mag'),
+            'rep': e.get('rep'),
+            'repSummary': (e.get('repSummary') or '')[:280],
+            'brief': e.get('brief'),
+        }
+        for e in events[:40]
+    ]
+    data = client.generate_json(
+        model=client.settings.flash_model,
+        system=(
+            'You are Orbit, a strategy aide for Indian SMB owners. '
+            'Answer only from the provided events. If unsure, say so. '
+            'Return JSON: {"answer":str,"citations":["E0001",...]}'
+        ),
+        prompt=(f'Sector focus: {sector or "general"}\nQuestion: {question}\nEvents: {context!r}'),
+        temperature=0.3,
+    )
+    if not isinstance(data, dict):
+        text = client.generate_text(
+            model=client.settings.flash_model,
+            system='Answer from the events only. Be concise.',
+            prompt=f'Sector: {sector}\nQuestion: {question}\nEvents: {context!r}',
+        )
+        return {'answer': text or 'No answer.', 'model': client.settings.flash_model, 'citations': []}
+
+    citations = [str(c) for c in (data.get('citations') or []) if c]
+    return {
+        'answer': str(data.get('answer') or '').strip() or 'No answer.',
+        'model': client.settings.flash_model,
+        'citations': citations,
+    }

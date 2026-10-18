@@ -6,6 +6,7 @@ import gzip
 import logging
 
 from flask import Blueprint, Flask, Response, current_app, jsonify, redirect, request, send_from_directory
+from sqlalchemy.exc import OperationalError
 from werkzeug.exceptions import HTTPException
 
 from .errors import ClientError, DatabaseNotReady, NoEventsProduced, PipelineBusy, SourceError
@@ -80,6 +81,12 @@ def register_error_handlers(app: Flask) -> None:
     def database_not_ready(error: DatabaseNotReady):
         log.error('%s', error)
         return _error(503, 'Service Unavailable', 'The database is not ready')
+
+    @app.errorhandler(OperationalError)
+    def database_unreachable(error: OperationalError):
+        log.exception('Database error on %s', request.path)
+        db.session.rollback()
+        return _error(503, 'Service Unavailable', 'The database is not reachable')
 
     @app.errorhandler(Exception)
     def unexpected(error: Exception):

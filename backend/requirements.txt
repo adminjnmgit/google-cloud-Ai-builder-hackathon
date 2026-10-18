@@ -7,3 +7,6 @@ PyMySQL>=1.1,<2
 cryptography>=42        # MySQL 8 / MariaDB sha256 and caching_sha2 password auth
 python-dotenv>=1.0,<2
 gunicorn>=23,<24
+google-genai>=1.0       # Vertex Gemini (classify, brief, chat, cluster, translate fallback)
+google-cloud-translate>=3.15
+google-cloud-discoveryengine>=0.13  # Vertex AI Search (optional)

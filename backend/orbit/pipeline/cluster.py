@@ -95,6 +95,7 @@ def cluster(hits, gap_days=4):
                 label=rows[0]['label'],
                 unit=rows[0]['unit'],
                 hit=float(rows[0]['hit']),
+                weight=float(rows[0].get('weight', rows[0]['hit'])),
                 cats=cats,
                 inds=inds,
                 dir=d,

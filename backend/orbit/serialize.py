@@ -48,6 +48,7 @@ def event_dict(event: Event, *, with_reports: bool = True) -> dict[str, Any]:
         'label': event.label,
         'unit': event.unit,
         'hit': event.hit,
+        'weight': event.hit,  # JEV-alike Weight agent; same column until a scorer writes its own
         'cats': _ordered_tags(event.tags, TagKind.CATEGORY, CATEGORIES),
         'inds': _ordered_tags(event.tags, TagKind.INDUSTRY, INDUSTRIES),
         'dir': event.direction,

@@ -13,6 +13,7 @@ from flask import current_app
 from sqlalchemy import text
 
 from . import store
+from .agents.runtime import ai_settings_from_config
 from .enums import RunStatus, Source
 from .errors import NoEventsProduced, PipelineBusy, SourceError
 from .extensions import db
@@ -112,7 +113,8 @@ def execute(
             reports, skipped = _load_reports(run, source, csv_path=csv_path, fileobj=fileobj, machine=machine)
             if not reports:
                 raise SourceError('The source has no usable English reports')
-            result = run_pipeline(reports)
+            settings = current_app.extensions['orbit.settings']
+            result = run_pipeline(reports, ai=ai_settings_from_config(settings.ai))
             if not result['events']:
                 raise NoEventsProduced('The pipeline produced no events; keeping the current data')
             _publish(run, result, skipped)

@@ -6,6 +6,7 @@ from flask import Blueprint, Response, abort, jsonify, request
 from sqlalchemy import select
 
 from .. import queries, store
+from ..agents.catalog import AGENTS
 from ..extensions import db
 from ..feed_cache import feed_cache
 from ..models import PipelineRun, iso
@@ -28,7 +29,7 @@ def health() -> Response:
     feed = None
     if run is not None:
         feed = {'run': run.id, 'source': run.source, 'events': run.events_out, 'refreshed': iso(run.finished_at)}
-    return jsonify(status='ok', database=db.engine.dialect.name, feed=feed)
+    return jsonify(status='ok', database=db.engine.dialect.name, feed=feed, agents=len(AGENTS))
 
 
 @bp.get('/data')

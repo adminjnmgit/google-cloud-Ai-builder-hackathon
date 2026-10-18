@@ -178,8 +178,23 @@
   /* --------------------------------------------------------------- start */
   function fail(err) {
     var view = document.getElementById('view') || document.body;
+    var local = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+    var hint = local
+      ? 'Start the backend with <code>python run.py</code> in <code>backend/</code>, or open the page again.'
+      : 'The live feed could not be loaded. Refresh the page, or check that Cloud Run can reach MySQL.';
     view.innerHTML = '<div style="padding:40px;font:15px system-ui,sans-serif;color:#10243b"><strong>Jagran Orbit could not start.</strong><p>' +
-      String(err && err.message || err).replace(/[<&]/g, '') + '</p><p>Start the backend with <code>python run.py</code> in <code>backend/</code>, or open the page again.</p></div>';
+      String(err && err.message || err).replace(/[<&]/g, '') + '</p><p>' + hint + '</p></div>';
+  }
+
+  function agents() { return request('GET', '/agents'); }
+  function chat(question, sector) {
+    return request('POST', '/agents/chat', { question: question, sector: sector || '' });
+  }
+  function brief(code) { return request('POST', '/agents/brief/' + encodeURIComponent(code)); }
+  function search(q, limit) {
+    var path = '/agents/search?q=' + encodeURIComponent(q || '');
+    if (limit) path += '&limit=' + encodeURIComponent(limit);
+    return request('GET', path);
   }
 
   window.OrbitStore = Store;
@@ -192,6 +207,10 @@
       Promise.all([loadData(), hydrate()]).then(function () { return script(appScript); }).catch(fail);
     },
     request: request,
+    agents: agents,
+    chat: chat,
+    brief: brief,
+    search: search,
     get online() { return online; }
   };
 })();
