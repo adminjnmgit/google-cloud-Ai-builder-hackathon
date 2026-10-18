@@ -1,0 +1,21 @@
+.DS_Store
+*.log
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+backend/.env
+backend/.env.*
+!backend/.env.example
+backend/instance/
+*.sql.gz
+*.sql
+!docs/*.sql
+*.pkl
+# Local news snapshot (headlines and summaries). Do not publish.
+frontend/owner/data/events.json
+frontend/owner/data/events.js
+.venv-translate/
+*.db
+legacy/
+.ruff_cache/

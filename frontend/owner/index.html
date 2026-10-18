@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#10243b">
+<title>Jagran Orbit</title>
+<link rel="stylesheet" href="css/owner.css">
+</head>
+<body>
+<div class="app">
+ <div class="mobile-overlay" id="mobileOverlay"></div>
+ <aside class="sidebar" id="sidebar" aria-label="Main navigation">
+  <div class="brand"><div class="mark" aria-hidden="true"><b></b></div><div><h1>jagran <span>orbit</span></h1><p>For growing SMBs</p></div></div>
+  <div class="nav-label">Your workspace</div>
+  <nav class="nav" id="navigation"></nav>
+  <div class="nav-note"><strong>Understand the change.<br>Make the next move.</strong><p>Focused alerts, simple cost planning and follow-ups for B2B suppliers.</p></div>
+  <div class="sidebar-bottom"><div class="row"><div class="avatar" id="sideAvatar">AC</div><div><strong id="sideName">Apex Components</strong><div style="margin-top:3px">Business workspace</div></div></div></div>
+ </aside>
+ <main class="main">
+  <header class="topbar">
+   <div class="top-left"><button class="mobile-menu" id="menuToggle" aria-label="Open menu"></button><div><div class="top-company" id="topName">Apex Components</div><div class="top-secondary" id="topIndustry">Manufacturing &middot; Gurugram</div></div></div>
+   <div class="top-right"><span class="top-secondary" id="topSector"></span><div class="top-avatar" id="topAvatar">AC</div></div>
+  </header>
+  <div class="content" id="view" aria-live="polite"></div>
+ </main>
+</div>
+<div class="toast" role="status" aria-live="polite" id="toast"></div>
+<script src="js/orbit-quant.js"></script>
+<script src="js/orbit-mvp-data.js"></script>
+<script src="../shared/orbit-api.js"></script>
+<!-- Loads the feed (API, or the bundled snapshot if the server is down), restores the owner's saved
+     workspace, then starts the app. -->
+<script>OrbitAPI.start('js/owner.js');</script>
+</body>
+</html>

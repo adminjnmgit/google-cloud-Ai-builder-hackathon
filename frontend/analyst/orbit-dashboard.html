@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+<title>Jagran Orbit</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+/* Layout: brand bar with coverage, four views (Overview, Events, Companies, Engine); Events is a master-detail list. Light-first with a selected dark theme. */
+:root { --bg: #f3f5f8; --surface: #ffffff; --surface-2: #f6f8fb; --fg: #172033; --fg-2: #3f4c63; --muted: #66748a; --line: #e2e7ef; --line-2: #cbd4e1;
+  --accent: #2a78d6; --accent-soft: #e8f0fb; --on-accent: #ffffff; --good: #0f7f6c; --good-soft: #e3f5ef; --crit: #c03d3d; --crit-soft: #fbe9e7; --warn: #8f5f0b; --warn-soft: #fff3d6;
+  --c1: #2a78d6; --c2: #eb6834; --c3: #1baf7a; --c4: #eda100; --c5: #e87ba4; --c6: #008300; --c7: #6250d6; --seq: 42, 120, 214;
+  --sans: 'IBM Plex Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif; --mono: 'IBM Plex Mono', ui-monospace, Menlo, monospace; color-scheme: light; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #0f141c; --surface: #161c26; --surface-2: #1b2230; --fg: #e6ecf5; --fg-2: #c0cad8; --muted: #93a1b5; --line: #273142; --line-2: #37445a;
+  --accent: #3987e5; --accent-soft: #1b2a45; --on-accent: #0b1220; --good: #4fc3a6; --good-soft: #143229; --crit: #ef8a84; --crit-soft: #3a1f1d; --warn: #e2b45a; --warn-soft: #3a2d12;
+  --c1: #3987e5; --c2: #d95926; --c3: #199e70; --c4: #c98500; --c5: #d55181; --c6: #008300; --c7: #9085e9; --seq: 57, 135, 229; color-scheme: dark; } }
+:root[data-theme="dark"] { --bg: #0f141c; --surface: #161c26; --surface-2: #1b2230; --fg: #e6ecf5; --fg-2: #c0cad8; --muted: #93a1b5; --line: #273142; --line-2: #37445a;
+  --accent: #3987e5; --accent-soft: #1b2a45; --on-accent: #0b1220; --good: #4fc3a6; --good-soft: #143229; --crit: #ef8a84; --crit-soft: #3a1f1d; --warn: #e2b45a; --warn-soft: #3a2d12;
+  --c1: #3987e5; --c2: #d95926; --c3: #199e70; --c4: #c98500; --c5: #d55181; --c6: #008300; --c7: #9085e9; --seq: 57, 135, 229; color-scheme: dark; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--sans); font-size: 14px; line-height: 1.5; }
+h1, h2, h3 { margin: 0; text-wrap: balance; } p { margin: 0; }
+.mono { font-family: var(--mono); font-variant-numeric: tabular-nums; } .muted { color: var(--muted); } .small { font-size: 12.5px; } .dim { color: var(--muted); font-size: 12px; }
+button, input, select { font: inherit; color: inherit; } button { cursor: pointer; }
+button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.top { background: var(--surface); border-bottom: 1px solid var(--line); position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--surface); }
+.top-in { max-width: 1480px; margin: 0 auto; padding-left: max(20px, env(safe-area-inset-left, 0px)); padding-right: max(20px, env(safe-area-inset-right, 0px)); padding-block: 10px; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.brand { display: flex; align-items: center; gap: 10px; } .brand h1 { font-size: 18px; font-weight: 700; letter-spacing: -.3px; } .brand h1 span { font-weight: 400; color: var(--muted); } .brand p { font-size: 12.5px; color: var(--muted); }
+.mark { height: 30px; width: 30px; border: 1.6px solid var(--accent); border-radius: 50%; display: grid; place-items: center; position: relative; flex-shrink: 0; } .mark:before { content: ""; width: 21px; height: 15px; border: 1.4px solid var(--good); border-radius: 50%; transform: rotate(-39deg); position: absolute; } .mark b { height: 7px; width: 7px; border-radius: 50%; background: var(--accent); }
+.nav { display: flex; gap: 4px; flex-wrap: wrap; } .nav button { border: 1px solid transparent; background: transparent; border-radius: 8px; padding: 7px 12px; font-weight: 600; color: var(--fg-2); } .nav button:hover { background: var(--surface-2); } .nav button.active { background: var(--accent-soft); color: var(--accent); border-color: var(--line); }
+.coverage { font-size: 12.5px; color: var(--muted); text-align: right; } .coverage b { color: var(--fg); font-weight: 600; }
+.wrap { max-width: 1480px; margin: 0 auto; padding-left: max(20px, env(safe-area-inset-left, 0px)); padding-right: max(20px, env(safe-area-inset-right, 0px)); padding-block: 18px 56px; display: flex; flex-direction: column; gap: 16px; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; min-width: 0; }
+.panel h2 { font-size: 15px; font-weight: 700; } .panel-desc { color: var(--muted); font-size: 12.5px; margin-top: 2px; }
+.grid { display: grid; gap: 14px; } .cols-5 { grid-template-columns: repeat(5, minmax(0, 1fr)); } .cols-2 { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .md { grid-template-columns: minmax(360px, 5fr) minmax(380px, 7fr); align-items: start; }
+.stat { padding: 14px 16px; } .stat .l { font-size: 12.5px; color: var(--muted); font-weight: 600; } .stat .v { font-family: var(--mono); font-size: 26px; font-weight: 700; letter-spacing: -.5px; margin-top: 6px; line-height: 1.1; } .stat .s { font-size: 12px; color: var(--muted); margin-top: 5px; }
+.filters { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; } .chip { border: 1px solid var(--line-2); background: var(--surface); border-radius: 999px; padding: 5px 11px; font-size: 12.5px; font-weight: 600; color: var(--fg-2); display: inline-flex; align-items: center; gap: 6px; } .chip:hover { background: var(--surface-2); } .chip.on { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); }
+.chip i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+select, input[type=search] { border: 1px solid var(--line-2); border-radius: 8px; padding: 6px 10px; background: var(--surface); min-width: 0; }
+.row { display: flex; align-items: center; gap: 10px; } .between { justify-content: space-between; } .wrapf { flex-wrap: wrap; }
+.pill { display: inline-block; font-size: 11.5px; font-weight: 600; border-radius: 6px; padding: 2px 7px; white-space: nowrap; } .pill.adverse, .pill.high { background: var(--crit-soft); color: var(--crit); } .pill.supportive, .pill.low { background: var(--good-soft); color: var(--good); } .pill.medium { background: var(--warn-soft); color: var(--warn); } .pill.plain { background: var(--surface-2); color: var(--fg-2); border: 1px solid var(--line); }
+.pill.Act { background: var(--accent); color: var(--on-accent); } .pill.Prepare { background: var(--warn-soft); color: var(--warn); } .pill.Monitor, .pill.Ignore { background: var(--surface-2); color: var(--muted); border: 1px solid var(--line); }
+.dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+.ev-list { display: flex; flex-direction: column; max-height: 76vh; overflow: auto; }
+.ev { display: grid; grid-template-columns: 10px minmax(0, 1fr) auto; gap: 10px; align-items: start; padding: 11px 8px; border: 0; border-bottom: 1px solid var(--line); background: transparent; text-align: left; color: var(--fg); border-radius: 8px; width: 100%; } .ev:hover { background: var(--surface-2); } .ev.sel { background: var(--accent-soft); }
+.ev .t, .ev .m { display: block; } .ev .stripe { width: 4px; height: 100%; min-height: 36px; border-radius: 4px; background: var(--line-2); margin-top: 2px; } .ev .t { font-weight: 600; font-size: 13.5px; line-height: 1.35; } .ev .m { font-size: 12px; color: var(--muted); margin-top: 3px; } .ev .r { text-align: right; font-size: 11.5px; color: var(--muted); white-space: nowrap; font-family: var(--mono); }
+.ev .badges { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 5px; }
+.tags { display: flex; flex-wrap: wrap; gap: 6px; } .tag { border: 1px solid var(--line-2); border-radius: 999px; padding: 3px 9px; font-size: 12px; color: var(--muted); } .tag.on { color: var(--fg); border-color: var(--line-2); font-weight: 600; background: var(--surface-2); }
+.kv { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; font-size: 13px; } .kv dt { color: var(--muted); } .kv dd { margin: 0; }
+.meter { height: 8px; border-radius: 8px; background: var(--line); position: relative; overflow: hidden; } .meter .fill { height: 100%; border-radius: 8px; } .meter i { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--muted); }
+.mrow { display: grid; grid-template-columns: minmax(80px, 180px) auto; gap: 10px; align-items: center; font-size: 12.5px; }
+.tbl { width: 100%; border-collapse: collapse; font-size: 13px; } .tbl th { text-align: left; font-weight: 500; color: var(--muted); font-size: 11.5px; padding: 6px 8px; border-bottom: 1px solid var(--line); } .tbl td { padding: 7px 8px; border-bottom: 1px solid var(--line); vertical-align: top; } .tbl tr:last-child td { border-bottom: 0; } .tbl td.n { font-family: var(--mono); text-align: right; white-space: nowrap; } .tbl tr.click { cursor: pointer; } .tbl tr.click:hover td { background: var(--surface-2); }
+.neg { color: var(--crit); } .pos { color: var(--good); }
+.reports { display: flex; flex-direction: column; gap: 8px; } .rep { display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: 10px; font-size: 12.5px; padding: 6px 0; border-bottom: 1px solid var(--line); } .rep:last-child { border: 0; } .rep .d { font-family: var(--mono); color: var(--muted); font-size: 11.5px; } .rep small { display: block; color: var(--muted); }
+.scen { display: grid; grid-template-columns: 100px 1fr 44px 130px; gap: 6px 10px; align-items: center; font-size: 12.5px; } .scen .pb { height: 8px; background: var(--line); border-radius: 3px; overflow: hidden; } .scen .pb div { height: 100%; } .scen .pct, .scen .rng { font-family: var(--mono); text-align: right; }
+.flow { display: flex; flex-wrap: wrap; gap: 6px; } .flow span { border: 1px solid var(--line); border-radius: 6px; padding: 3px 8px; background: var(--surface-2); font-size: 12px; } .flow i { align-self: center; color: var(--muted); font-style: normal; }
+details { margin-top: 8px; } summary { cursor: pointer; font-weight: 600; font-size: 13px; }
+.heat { display: grid; gap: 4px; } .heat .cell { border-radius: 5px; padding: 8px 6px; text-align: center; font-family: var(--mono); font-size: 13px; font-weight: 600; min-height: 38px; display: grid; place-items: center; } .heat .hd { font-size: 11.5px; color: var(--muted); text-align: center; align-self: end; padding-bottom: 2px; } .heat .rh { font-size: 12px; color: var(--fg-2); align-self: center; padding-right: 6px; }
+.legend { display: flex; flex-wrap: wrap; gap: 10px 14px; font-size: 12px; color: var(--fg-2); margin-top: 8px; } .legend span { display: inline-flex; align-items: center; gap: 6px; }
+svg text { font-family: var(--mono); font-size: 10.5px; fill: var(--muted); }
+.tip { position: fixed; z-index: 50; background: var(--surface); border: 1px solid var(--line-2); border-radius: 8px; padding: 8px 10px; font-size: 12px; box-shadow: 0 8px 24px rgba(0,0,0,.14); pointer-events: none; max-width: 260px; }
+.empty { color: var(--muted); padding: 30px 10px; text-align: center; font-size: 13px; }
+.note { font-size: 12.5px; color: var(--fg-2); border-left: 2px solid var(--line-2); padding-left: 10px; }
+.steps { margin: 8px 0 0; padding-left: 18px; font-size: 12.5px; } .steps li { margin: 3px 0; }
+.rel { display: grid; grid-template-columns: repeat(10, 1fr); gap: 4px; align-items: end; height: 110px; margin-top: 8px; } .rel .bar { background: var(--line); border-radius: 3px 3px 0 0; position: relative; height: 100%; } .rel .bar div { position: absolute; left: 0; right: 0; bottom: 0; background: var(--accent); border-radius: 3px 3px 0 0; } .rel .bar i { position: absolute; left: 0; right: 0; height: 2px; background: var(--crit); }
+.rel-x { display: grid; grid-template-columns: repeat(10, 1fr); gap: 4px; font-size: 10.5px; color: var(--muted); font-family: var(--mono); text-align: center; }
+.co-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 8px; } .co { border: 1px solid var(--line-2); border-radius: 9px; padding: 9px 11px; text-align: left; background: var(--surface); } .co.on { border-color: var(--accent); background: var(--accent-soft); } .co b { display: block; font-size: 13px; } .co span { font-size: 11.5px; color: var(--muted); }
+@media (max-width: 1100px) { .cols-5 { grid-template-columns: repeat(2, minmax(0, 1fr)); } .md, .cols-2 { grid-template-columns: 1fr; } .ev-list { max-height: 50vh; } }
+@media (max-width: 640px) { .cols-5 { grid-template-columns: 1fr; } .coverage { text-align: left; } .scen { grid-template-columns: 84px 1fr 40px 110px; } .rep { grid-template-columns: 1fr; } .heat .cell { font-size: 12px; padding: 6px 2px; } }
+</style>
+
+<div class="top"><div class="top-in">
+  <div class="brand"><div class="mark" aria-hidden="true"><b></b></div><div><h1>Jagran <span>Orbit</span></h1><p>Strategy intelligence across 15 business sectors</p></div></div>
+  <nav class="nav" id="nav"></nav>
+  <div class="coverage" id="coverage"></div>
+</div></div>
+<div class="wrap" id="view"></div>
+<div class="tip" id="tip" hidden></div>
+
+<script>
+/*
+ * Orbit Quant Engine: event to EBITDA, with scenario bands, materiality, calibrated confidence and a decision layer.
+ * Runs in Node (tests, CLI) and in the browser (window.OrbitQuant). No dependencies.
+ *
+ * Pipeline per (event, company):
+ *   verify sources -> map channels (first order, plus second order through event links) -> shock distribution
+ *   -> Monte Carlo transmission -> scenario bands -> materiality -> confidence (components, isotonic calibration)
+ *   -> levers and decision -> audit trace
+ *
+ * Units: EBITDA impact is in percent of EBITDA. Variable moves are in the event's unit (%, bps or pts).
+ * A channel's beta is the median EBITDA % change per 1 unit of the variable (per 100 bps for rate-type variables)
+ * before pass-through, hedge and substitution. sigmaC is the lognormal uncertainty on beta.
+ */
+(function (root, factory) {
+  if (typeof module === 'object' && module.exports) module.exports = factory(); else root.OrbitQuant = factory();
+})(typeof self !== 'undefined' ? self : this, function () {
+  'use strict';
+
+  // ------------------------------------------------------------------ numerics
+  function mulberry32(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+  function hash(s) { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
+  function gaussians(rng, n) { const out = new Float64Array(n); for (let i = 0; i < n; i += 2) { let u = 0, v = 0; while (u === 0) u = rng(); while (v === 0) v = rng(); const r = Math.sqrt(-2 * Math.log(u)), t = 2 * Math.PI * v; out[i] = r * Math.cos(t); if (i + 1 < n) out[i + 1] = r * Math.sin(t); } return out; }
+  // Acklam's inverse normal CDF
+  function qnorm(p) { const a = [-3.969683028665376e+01, 2.209460984245205e+02, -2.759285104469687e+02, 1.383577518672690e+02, -3.066479806614716e+01, 2.506628277459239e+00], b = [-5.447609879822406e+01, 1.615858368580409e+02, -1.556989798598866e+02, 6.680131188771972e+01, -1.328068155288572e+01], c = [-7.784894002430293e-03, -3.223964580411365e-01, -2.400758277161838e+00, -2.549732539343734e+00, 4.374664141464968e+00, 2.938163982698783e+00], d = [7.784695709041462e-03, 3.224671290700398e-01, 2.445134137142996e+00, 3.754408661907416e+00]; const pl = 0.02425, ph = 1 - pl; let q, r; if (p < pl) { q = Math.sqrt(-2 * Math.log(p)); return (((((c[0] * q + c[1]) * q + c[2]) * q + c[3]) * q + c[4]) * q + c[5]) / ((((d[0] * q + d[1]) * q + d[2]) * q + d[3]) * q + 1); } if (p <= ph) { q = p - 0.5; r = q * q; return (((((a[0] * r + a[1]) * r + a[2]) * r + a[3]) * r + a[4]) * r + a[5]) * q / (((((b[0] * r + b[1]) * r + b[2]) * r + b[3]) * r + b[4]) * r + 1); } q = Math.sqrt(-2 * Math.log(1 - p)); return -(((((c[0] * q + c[1]) * q + c[2]) * q + c[3]) * q + c[4]) * q + c[5]) / ((((d[0] * q + d[1]) * q + d[2]) * q + d[3]) * q + 1); }
+  function quantile(sorted, p) { const i = (sorted.length - 1) * p, lo = Math.floor(i), hi = Math.ceil(i); return sorted[lo] + (sorted[hi] - sorted[lo]) * (i - lo); }
+  const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+  const r1 = x => Math.round(x * 10) / 10, r2 = x => Math.round(x * 100) / 100, r3 = x => Math.round(x * 1000) / 1000;
+
+  // Pool-adjacent-violators isotonic regression: returns a monotone step map raw -> calibrated
+  function isotonic(pairs) {
+    const pts = pairs.slice().sort((a, b) => a[0] - b[0]);
+    const blocks = pts.map(p => ({ sum: p[1], n: 1, lo: p[0], hi: p[0] }));
+    let i = 0;
+    while (i < blocks.length - 1) {
+      if (blocks[i].sum / blocks[i].n > blocks[i + 1].sum / blocks[i + 1].n) {
+        const m = { sum: blocks[i].sum + blocks[i + 1].sum, n: blocks[i].n + blocks[i + 1].n, lo: blocks[i].lo, hi: blocks[i + 1].hi };
+        blocks.splice(i, 2, m); if (i > 0) i--;
+      } else i++;
+    }
+    const steps = blocks.map(b => ({ x: (b.lo + b.hi) / 2, y: b.sum / b.n, lo: b.lo, hi: b.hi, n: b.n }));
+    const predict = x => { if (!steps.length) return x; if (x <= steps[0].x) return steps[0].y; if (x >= steps[steps.length - 1].x) return steps[steps.length - 1].y; for (let k = 0; k < steps.length - 1; k++) { const a = steps[k], b = steps[k + 1]; if (x >= a.x && x <= b.x) return a.y + (b.y - a.y) * (x - a.x) / (b.x - a.x || 1); } return x; };
+    return { steps, predict };
+  }
+
+  // Platt scaling: logistic fit of hit ~ a + b * logit(raw) by Newton's method. Smooth and monotone; used for the live score. Isotonic bins stay as the diagnostic.
+  function platt(pairs) {
+    const logit = p => Math.log(clamp(p, 1e-4, 1 - 1e-4) / (1 - clamp(p, 1e-4, 1 - 1e-4))), sig = z => 1 / (1 + Math.exp(-z));
+    let a = 0, b = 1;
+    for (let it = 0; it < 25; it++) {
+      let g0 = 0, g1 = 0, h00 = 0, h01 = 0, h11 = 0;
+      pairs.forEach(([x, y]) => { const z = logit(x), p = sig(a + b * z), w = p * (1 - p); g0 += p - y; g1 += (p - y) * z; h00 += w; h01 += w * z; h11 += w * z * z; });
+      h00 += 1e-3; h11 += 1e-3; // ridge
+      const det = h00 * h11 - h01 * h01; if (Math.abs(det) < 1e-12) break;
+      const da = (h11 * g0 - h01 * g1) / det, db = (h00 * g1 - h01 * g0) / det; a -= da; b -= db; if (Math.abs(da) + Math.abs(db) < 1e-9) break;
+    }
+    return { a: r3(a), b: r3(b), predict: x => sig(a + b * logit(x)) };
+  }
+
+  // ------------------------------------------------------------------ data: tags, events, companies
+  const TAGS = ['Supply disruption', 'Commodity shock', 'Geopolitical event', 'Interest-rate change', 'Trade restriction', 'Regulation', 'Demand shock', 'Technology change'];
+
+  // sigmaE: lognormal dispersion of the realised move around the stated magnitude. hit: precedent direction hit rate for this event type.
+  const EVENTS = [
+    { id: 'crude', title: 'Crude oil rises 10% following a supply disruption', keys: ['crude', 'oil', 'brent', 'supply'], tags: ['Supply disruption', 'Commodity shock', 'Geopolitical event'], date: '2026-10-03', horizonQ: 2, horizonText: '1 to 3 quarters',
+      variable: { name: 'crude', label: 'Crude oil price', unit: '%', magnitude: 10 }, sigmaE: 0.25, hit: 0.70,
+      precedents: [{ title: '2022 supply shock', sim: 0.82, outcome: 'Airline EBITDA fell 4 to 6%; upstream EBITDA rose 5 to 8%' }, { title: '2019 Abqaiq attack', sim: 0.66, outcome: 'Crude +15% for three weeks, then normalised' }],
+      sources: [{ src: 'Exchange settlement (Brent)', cred: 0.99, type: 'FACT', claim: 'move' }, { src: 'Wire service', cred: 0.92, type: 'FACT', claim: 'outage' }, { src: 'OMC price notice', cred: 0.9, type: 'FACT', claim: 'retail' }, { src: 'Transport association', cred: 0.65, type: 'CLAIM', claim: 'freight' }, { src: 'Analyst note', cred: 0.6, type: 'PREDICTION', claim: 'polymer' }] },
+    { id: 'rate', title: 'The policy rate rises by 50 basis points', keys: ['rate', 'repo', 'policy', 'interest', 'mpc'], tags: ['Interest-rate change'], date: '2026-10-09', horizonQ: 2, horizonText: '1 to 2 quarters',
+      variable: { name: 'rate', label: 'Policy rate', unit: 'bps', magnitude: 50 }, sigmaE: 0.20, hit: 0.72,
+      precedents: [{ title: '2022 to 2023 hiking cycle', sim: 0.88, outcome: 'Private bank NIM widened 20 to 35 bps; auto volume growth slowed' }],
+      sources: [{ src: 'Central bank statement', cred: 0.99, type: 'FACT', claim: 'hike' }, { src: 'Wire service', cred: 0.95, type: 'FACT', claim: 'hike' }, { src: 'Bank circular', cred: 0.9, type: 'FACT', claim: 'reset' }, { src: 'Columnist', cred: 0.5, type: 'INTERPRETATION', claim: 'stance' }] },
+    { id: 'steel', title: 'Steel prices rise 12% in a commodity shock', keys: ['steel', 'hrc', 'commodity', 'metal'], tags: ['Commodity shock'], date: '2026-10-07', horizonQ: 2, horizonText: '1 to 3 quarters',
+      variable: { name: 'steel', label: 'Steel price', unit: '%', magnitude: 12 }, sigmaE: 0.30, hit: 0.70,
+      precedents: [{ title: '2021 steel rally', sim: 0.8, outcome: 'Auto OEM margins fell 100 to 250 bps; metal producers gained' }, { title: '2016 minimum import price', sim: 0.72, outcome: 'Domestic steel +9% for two quarters' }],
+      sources: [{ src: 'Exchange data (HRC)', cred: 0.97, type: 'FACT', claim: 'move' }, { src: 'Mill price circular', cred: 0.9, type: 'FACT', claim: 'move' }, { src: 'Trade daily', cred: 0.7, type: 'CLAIM', claim: 'further' }, { src: 'Regional newspaper', cred: 0.55, type: 'CLAIM', claim: 'move', conflict: true }] },
+    { id: 'pharma', title: 'A trade restriction cuts a key drug intermediate by 15%', keys: ['pharma', 'drug', 'intermediate', 'api', 'trade'], tags: ['Trade restriction'], date: '2026-10-01', horizonQ: 2, horizonText: '1 to 3 quarters',
+      variable: { name: 'intermediate', label: 'Drug intermediate price', unit: '%', magnitude: 15 }, sigmaE: 0.35, hit: 0.68,
+      precedents: [{ title: '2020 API supply squeeze', sim: 0.78, outcome: 'Formulation makers lost 150 to 300 bps of margin; domestic API makers gained' }],
+      sources: [{ src: 'Customs notification', cred: 0.96, type: 'FACT', claim: 'restriction' }, { src: 'Wire service', cred: 0.92, type: 'FACT', claim: 'restriction' }, { src: 'Importer association', cred: 0.68, type: 'CLAIM', claim: 'quotes' }, { src: 'Broker note', cred: 0.6, type: 'PREDICTION', claim: 'duration' }] },
+    { id: 'regulation', title: 'A regulation cuts essential drug prices by 8%', keys: ['regulation', 'price control', 'nppa', 'essential', 'drug prices'], tags: ['Regulation'], date: '2026-10-05', horizonQ: 2, horizonText: '1 to 2 quarters',
+      variable: { name: 'drug_price', label: 'Essential drug prices', unit: '%', magnitude: -8 }, sigmaE: 0.20, hit: 0.74,
+      precedents: [{ title: '2013 drug price control order', sim: 0.8, outcome: 'Affected portfolios lost 2 to 4% of EBITDA over two quarters' }],
+      sources: [{ src: 'Gazette notification', cred: 0.98, type: 'FACT', claim: 'cut' }, { src: 'PIB release', cred: 0.95, type: 'FACT', claim: 'cut' }, { src: 'Industry body', cred: 0.65, type: 'CLAIM', claim: 'impact' }],
+      secondOrder: [{ variable: 'bond_yield', label: 'Government bond yields', unit: 'bps', magnitude: -8, sigma: 0.60, hit: 0.55, path: ['Essential drug prices -8%', 'CPI about -0.08 pp', 'Bond yields about -8 bps'] }] },
+    { id: 'demand', title: 'Enterprise technology budgets fall 8%', keys: ['demand', 'technology budgets', 'it spend', 'enterprise', 'tech'], tags: ['Demand shock'], date: '2026-10-02', horizonQ: 2, horizonText: '1 to 3 quarters',
+      variable: { name: 'tech_budget', label: 'Enterprise technology budgets', unit: '%', magnitude: -8 }, sigmaE: 0.35, hit: 0.66,
+      precedents: [{ title: '2009 and 2023 IT spending cuts', sim: 0.74, outcome: 'Indian IT services EBITDA fell 2 to 4% with a two-quarter lag' }],
+      sources: [{ src: 'Industry survey (n=400 CIOs)', cred: 0.85, type: 'FACT', claim: 'cut' }, { src: 'Wire service', cred: 0.9, type: 'FACT', claim: 'cut' }, { src: 'Broker note', cred: 0.6, type: 'PREDICTION', claim: 'deal flow' }],
+      secondOrder: [{ variable: 'bond_yield', label: 'Government bond yields', unit: 'bps', magnitude: -10, sigma: 0.77, hit: 0.55, path: ['Technology budgets -8%', 'IT exports and hiring soften', 'Growth expectations lower, yields about -10 bps'] }] },
+    { id: 'ev', title: 'EV share of new cars rises by 6 points', keys: ['ev', 'electric', 'electric vehicle', 'ev share'], tags: ['Technology change'], date: '2026-09-29', horizonQ: 3, horizonText: '2 to 4 quarters',
+      variable: { name: 'ev_share', label: 'EV share of new cars', unit: 'pts', magnitude: 6 }, sigmaE: 0.40, hit: 0.60,
+      precedents: [{ title: 'China 2020 to 2023 EV adoption', sim: 0.62, outcome: 'EV-led OEMs gained share; fuel demand growth slowed' }],
+      sources: [{ src: 'Registration data (VAHAN)', cred: 0.95, type: 'FACT', claim: 'share' }, { src: 'Wire service', cred: 0.9, type: 'FACT', claim: 'share' }, { src: 'Consultant report', cred: 0.6, type: 'PREDICTION', claim: 'trajectory' }, { src: 'Social media post', cred: 0.3, type: 'CLAIM', claim: 'share', conflict: true }] },
+  ];
+
+  // Channel fields: variable, kind (cost | revenue | finance | demand | treasury), share (of revenue), beta, sigmaC, passThrough, lagQ, hedge, substitution, policyRisk, source (disclosed | estimated | second-order), basis
+  // kind decides the transmission factor T: cost and demand -> (1 - passThrough); revenue, finance and treasury -> passThrough; all x (1 - hedge) x (1 - substitution)
+  const COMPANIES = [
+    { id: 'indigo', name: 'IndiGo', sector: 'Airline', margin: 0.29, asOf: '2026-06-30', desc: 'Sells air tickets; largest domestic airline. Fuel is the biggest cost line and is only partly hedged.',
+      channels: [{ variable: 'crude', kind: 'cost', name: 'Aviation fuel', share: 0.37, beta: 0.880, sigmaC: 0.228, passThrough: 0.45, lagQ: 1, hedge: 0.20, substitution: 0, policyRisk: 0, source: 'estimated', basis: 'Fuel 37% of revenue, ATF moves about 0.7x crude, EBITDAR margin 29%' }] },
+    { id: 'spicejet', name: 'SpiceJet', sector: 'Airline', margin: 0.12, asOf: '2026-06-30', desc: 'Sells air tickets; low-cost carrier with a thin margin and almost no fuel hedging.',
+      channels: [{ variable: 'crude', kind: 'cost', name: 'Aviation fuel', share: 0.40, beta: 0.723, sigmaC: 0.221, passThrough: 0.40, lagQ: 1, hedge: 0.05, substitution: 0, policyRisk: 0, source: 'estimated', basis: 'Fuel 40% of revenue, thin margin amplifies the percentage effect' }] },
+    { id: 'airindia', name: 'Air India', sector: 'Airline', margin: 0.15, asOf: '2026-06-30', desc: 'Sells air tickets; full-service carrier with a large international network and a sizeable fuel hedge.',
+      channels: [{ variable: 'crude', kind: 'cost', name: 'Aviation fuel', share: 0.35, beta: 0.848, sigmaC: 0.236, passThrough: 0.42, lagQ: 1, hedge: 0.42, substitution: 0, policyRisk: 0, source: 'estimated', basis: 'Fuel 35% of revenue, 42% hedged for the next two quarters' }] },
+    { id: 'ongc', name: 'ONGC', sector: 'Oil and gas', margin: 0.45, asOf: '2026-06-30', desc: 'Oil and gas producer; realisations track crude but a windfall levy caps the upside.',
+      channels: [{ variable: 'crude', kind: 'revenue', name: 'Crude realisations', share: 0.75, beta: 0.714, sigmaC: 0.421, passThrough: 0.82, lagQ: 1, hedge: 0.12, substitution: 0, policyRisk: 0.40, source: 'disclosed', basis: 'Company sensitivity table: EBITDA per $1/bbl; 82% captured after the windfall levy' },
+        { variable: 'ev_share', kind: 'demand', signUp: -1, name: 'Domestic fuel demand', share: 0.75, beta: 0.299, sigmaC: 0.549, passThrough: 0.20, lagQ: 2, hedge: 0.12, substitution: 0, policyRisk: 0, source: 'estimated', basis: 'Petrol demand growth slows about 0.5 pp per EV share point' }] },
+    { id: 'oilindia', name: 'Oil India', sector: 'Oil and gas', margin: 0.42, asOf: '2026-06-30', desc: 'Oil and gas producer in the north-east; realisations track crude.',
+      channels: [{ variable: 'crude', kind: 'revenue', name: 'Crude realisations', share: 0.70, beta: 0.520, sigmaC: 0.402, passThrough: 0.80, lagQ: 1, hedge: 0.10, substitution: 0, policyRisk: 0.30, source: 'estimated', basis: 'Realisations 70% of revenue; windfall levy applies above a threshold' }] },
+    { id: 'ioc', name: 'Indian Oil', sector: 'Oil refining and marketing', margin: 0.08, asOf: '2026-06-30', desc: 'Refiner and fuel retailer; crude is the input and retail prices lag.',
+      channels: [{ variable: 'crude', kind: 'cost', name: 'Crude input', share: 0.85, beta: 0.481, sigmaC: 0.228, passThrough: 0.30, lagQ: 1, hedge: 0.08, substitution: 0, policyRisk: 0.2, source: 'estimated', basis: 'Retail price lag; marketing margin absorbs the first weeks' }] },
+    { id: 'bpcl', name: 'BPCL', sector: 'Oil refining and marketing', margin: 0.09, asOf: '2026-06-30', desc: 'Refiner and fuel retailer with a larger hedge book than peers.',
+      channels: [{ variable: 'crude', kind: 'cost', name: 'Crude input', share: 0.84, beta: 0.441, sigmaC: 0.238, passThrough: 0.35, lagQ: 1, hedge: 0.14, substitution: 0, policyRisk: 0.2, source: 'estimated', basis: 'Retail price lag; 14% of crude purchases hedged' }] },
+    { id: 'vedanta', name: 'Vedanta', sector: 'Metals and mining', margin: 0.30, asOf: '2026-06-30', desc: 'Diversified metals and oil producer: zinc, aluminium, iron ore and Cairn oil.',
+      channels: [{ variable: 'steel', kind: 'revenue', name: 'Iron ore and metal realisations', share: 0.55, beta: 0.442, sigmaC: 0.347, passThrough: 0.80, lagQ: 1, hedge: 0, substitution: 0, policyRisk: 0, source: 'estimated', basis: 'Iron ore and ferrous realisations track steel with a one-quarter lag' },
+        { variable: 'crude', kind: 'revenue', name: 'Oil and gas realisations (Cairn)', share: 0.20, beta: 0.323, sigmaC: 0.351, passThrough: 0.70, lagQ: 1, hedge: 0, substitution: 0, policyRisk: 0.2, source: 'estimated', basis: 'Cairn oil about 20% of revenue, net of profit petroleum and levy' }] },
+    { id: 'hdfc', name: 'HDFC Bank', sector: 'Bank', margin: 0.55, asOf: '2026-06-30', desc: 'Private sector bank; net interest margin widens when policy rates rise.',
+      channels: [{ variable: 'rate', kind: 'finance', name: 'Net interest margin', share: 0.80, beta: 8.081, sigmaC: 0.402, passThrough: 0.70, lagQ: 1, hedge: 0, substitution: 0, policyRisk: 0, source: 'disclosed', basis: 'Interest-rate sensitivity table: NII +5.7% per 100 bps; 70% of the policy move reaches the book' },
+        { variable: 'bond_yield', kind: 'treasury', name: 'Treasury book (AFS) mark-to-market', share: 0.10, beta: 3.7, sigmaC: 0.38, passThrough: 1.0, lagQ: 1, hedge: 0, substitution: 0, policyRisk: 0, source: 'second-order', basis: 'AFS book duration about 2.5 years; +3.7% of PPOP per 100 bps fall in yields' }] },
+    { id: 'icici', name: 'ICICI Bank', sector: 'Bank', margin: 0.55, asOf: '2026-06-30', desc: 'Private sector bank with a large floating-rate loan book.',
+      channels: [{ variable: 'rate', kind: 'finance', name: 'Net interest margin', share: 0.80, beta: 6.788, sigmaC: 0.402, passThrough: 0.75, lagQ: 1, hedge: 0, substitution: 0, policyRisk: 0, source: 'disclosed', basis: 'Interest-rate sensitivity table; 75% of the policy move reaches the book' }] },
+    { id: 'sbi', name: 'State Bank of India', sector: 'Bank', margin: 0.50, asOf: '2026-06-30', desc: 'Largest public sector bank; deposit franchise reprices slowly.',
+      channels: [{ variable: 'rate', kind: 'finance', name: 'Net interest margin', share: 0.80, beta: 6.171, sigmaC: 0.402, passThrough: 0.55, lagQ: 1, hedge: 0, substitution: 0, policyRisk: 0, source: 'disclosed', basis: 'Interest-rate sensitivity table; 55% of the policy move reaches the book' }] },
+    { id: 'axis', name: 'Axis Bank', sector: 'Bank', margin: 0.52, asOf: '2026-06-30', desc: 'Private sector bank; corporate and retail lending.',
+      channels: [{ variable: 'rate', kind: 'finance', name: 'Net interest margin', share: 0.80, beta: 6.465, sigmaC: 0.402, passThrough: 0.70, lagQ: 1, hedge: 0, substitution: 0, policyRisk: 0, source: 'disclosed', basis: 'Interest-rate sensitivity table; 70% of the policy move reaches the book' }] },
+    { id: 'maruti', name: 'Maruti Suzuki', sector: 'Car manufacturer', margin: 0.12, asOf: '2026-06-30', desc: 'Largest car maker; steel is the biggest raw material and buyers depend on car loans.',
+      channels: [{ variable: 'steel', kind: 'cost', name: 'Steel and raw materials', share: 0.33, beta: 0.253, sigmaC: 0.382, passThrough: 0.40, lagQ: 1, hedge: 0.05, substitution: 0, policyRisk: 0, source: 'estimated', basis: 'Raw materials 33% of revenue, steel about half of that' },
+        { variable: 'rate', kind: 'demand', signUp: -1, name: 'Car-loan financed demand', share: 0.80, beta: 4.041, sigmaC: 0.402, passThrough: 0.30, lagQ: 1, hedge: 0, substitution: 0, policyRisk: 0, source: 'estimated', basis: '80% of sales financed; volumes fall about 1% per 50 bps' }] },
+    { id: 'tata', name: 'Tata Motors', sector: 'Car manufacturer', margin: 0.13, asOf: '2026-06-30', desc: 'Car, EV and truck maker; leads domestic EV sales.',
+      channels: [{ variable: 'ev_share', kind: 'revenue', name: 'EV volume and mix', share: 0.15, beta: 0.673, sigmaC: 0.323, passThrough: 0.70, lagQ: 1, hedge: 0, substitution: 0, policyRisk: 0, source: 'estimated', basis: 'EV share of domestic sales about 70% of the incremental EV market' },
+        { variable: 'steel', kind: 'cost', name: 'Steel and raw materials', share: 0.35, beta: 0.238, sigmaC: 0.347, passThrough: 0.45, lagQ: 1, hedge: 0.10, substitution: 0, policyRisk: 0, source: 'estimated', basis: 'Raw materials 35% of revenue' }] },
+    { id: 'hero', name: 'Hero MotoCorp', sector: 'Two-wheeler manufacturer', margin: 0.14, asOf: '2026-06-30', desc: 'Largest two-wheeler maker; exposed to steel and to the shift to electric scooters.',
+      channels: [{ variable: 'steel', kind: 'cost', name: 'Steel and raw materials', share: 0.30, beta: 0.223, sigmaC: 0.347, passThrough: 0.26, lagQ: 1, hedge: 0, substitution: 0, policyRisk: 0, source: 'estimated', basis: 'Raw materials 30% of revenue; price revisions lag a quarter' },
+        { variable: 'ev_share', kind: 'demand', signUp: -1, name: 'Petrol two-wheeler demand', share: 0.90, beta: 0.184, sigmaC: 0.511, passThrough: 0.30, lagQ: 2, hedge: 0, substitution: 0, policyRisk: 0, source: 'estimated', basis: 'Electric scooters take share from entry petrol models' }] },
+    { id: 'sun', name: 'Sun Pharmaceutical', sector: 'Pharmaceutical', margin: 0.28, asOf: '2026-06-30', desc: 'Largest drug maker; imports intermediates and sells price-controlled essential drugs.',
+      channels: [{ variable: 'intermediate', kind: 'cost', name: 'Imported intermediates', share: 0.22, beta: 0.299, sigmaC: 0.312, passThrough: 0.30, lagQ: 1, hedge: 0.10, substitution: 0, policyRisk: 0, source: 'estimated', basis: 'Intermediates 22% of revenue' },
+        { variable: 'drug_price', kind: 'demand', name: 'Price-controlled portfolio', share: 0.25, beta: 0.331, sigmaC: 0.391, passThrough: 0.20, lagQ: 1, hedge: 0, substitution: 0, policyRisk: 0, source: 'estimated', basis: 'Essential drugs about 25% of domestic revenue; mix shift offsets 20%' },
+        { variable: 'rate', kind: 'finance', signUp: -1, name: 'Floating-rate debt', share: 0.05, beta: 1.732, sigmaC: 0.683, passThrough: 0.20, lagQ: 1, hedge: 0, substitution: 0, policyRisk: 0, source: 'estimated', basis: 'Net debt small relative to EBITDA' }] },
+    { id: 'divis', name: "Divi's Laboratories", sector: 'Pharmaceutical', margin: 0.33, asOf: '2026-06-30', desc: 'Makes active ingredients and intermediates in India; gains when imported supply is restricted.',
+      channels: [{ variable: 'intermediate', kind: 'revenue', name: 'Domestic intermediate sales', share: 0.60, beta: 0.377, sigmaC: 0.312, passThrough: 0.75, lagQ: 1, hedge: 0, substitution: 0, policyRisk: 0, source: 'estimated', basis: 'Domestic API and intermediate pricing follows import parity' }] },
+    { id: 'tcs', name: 'TCS', sector: 'IT services', margin: 0.26, asOf: '2026-06-30', desc: 'Largest IT services exporter; revenue follows enterprise technology budgets.',
+      channels: [{ variable: 'tech_budget', kind: 'demand', name: 'Enterprise services demand', share: 0.95, beta: 0.295, sigmaC: 0.328, passThrough: 0.10, lagQ: 2, hedge: 0, substitution: 0, policyRisk: 0, source: 'estimated', basis: 'Revenue elasticity to client budgets about 0.4 with a two-quarter lag' }] },
+  ];
+
+  // ------------------------------------------------------------------ search
+  const norm = s => String(s || '').toLowerCase().trim();
+  function findEvents(q) { const n = norm(q); if (!n) return []; return EVENTS.filter(e => norm(e.title).includes(n) || e.keys.some(k => k.includes(n) || n.includes(k) && n.length >= 3)); }
+  function findCompanies(q) { const n = norm(q); if (!n) return []; return COMPANIES.filter(c => norm(c.name + ' ' + c.sector + ' ' + c.desc).includes(n)); }
+  const eventById = id => EVENTS.find(e => e.id === id);
+  const companyById = id => COMPANIES.find(c => c.id === id);
+
+  // ------------------------------------------------------------------ source verification
+  function verify(ev) {
+    const groups = {}; ev.sources.forEach(s => { (groups[s.claim] = groups[s.claim] || []).push(s); });
+    const rows = ev.sources.map(s => { const corroboration = groups[s.claim].filter(o => o !== s && !o.conflict).length; const conf = s.conflict ? r2(s.cred * 0.4) : r2(clamp(s.cred * (1 + 0.08 * corroboration), 0, 0.99)); return { ...s, corroboration, conf, status: s.conflict ? 'CONFLICT' : s.type }; });
+    const facts = rows.filter(r => r.type === 'FACT' && !r.conflict);
+    const sourceConfidence = r2(facts.reduce((a, r) => a + r.conf, 0) / Math.max(1, facts.length));
+    return { rows, facts: facts.length, conflicts: rows.filter(r => r.conflict).length, sourceConfidence };
+  }
+
+  // ------------------------------------------------------------------ channel mapping (first and second order)
+  function channelsFor(ev, co) {
+    const out = [];
+    co.channels.filter(c => c.variable === ev.variable.name).forEach(c => out.push({ ...c, order: 1, move: ev.variable, sigmaE: ev.sigmaE, hit: ev.hit, path: null }));
+    (ev.secondOrder || []).forEach(link => co.channels.filter(c => c.variable === link.variable).forEach(c => out.push({ ...c, order: 2, move: { name: link.variable, label: link.label, unit: link.unit, magnitude: link.magnitude }, sigmaE: link.sigma, hit: link.hit, path: link.path })));
+    return out;
+  }
+  const unitScale = u => u === 'bps' ? 1 / 100 : 1; // betas for rate-type variables are per 100 bps
+  function transmission(c, horizonQ) { const pEff = c.passThrough * Math.min(1, horizonQ / Math.max(1, c.lagQ)); const base = (c.kind === 'cost' || c.kind === 'demand') ? (1 - pEff) : pEff; return { T: base * (1 - c.hedge) * (1 - c.substitution), pEff }; }
+  // Sign of the EBITDA effect when the variable rises: cost and treasury default to adverse (-1), revenue, finance and demand default to supportive (+1); a channel can override with signUp.
+  const SIGN_UP = { cost: -1, treasury: -1, revenue: 1, finance: 1, demand: 1 };
+  function channelSign(c) { const signUp = c.signUp !== undefined ? c.signUp : SIGN_UP[c.kind]; return (c.move.magnitude > 0 ? 1 : -1) * signUp; }
+  function channelMedian(c, horizonQ) { const { T } = transmission(c, horizonQ); return channelSign(c) * c.beta * Math.abs(c.move.magnitude) * unitScale(c.move.unit) * T; }
+
+  // ------------------------------------------------------------------ Monte Carlo transmission
+  function simulate(ev, co, chans, opts) {
+    const N = (opts && opts.draws) || 8000; const half = N / 2;
+    const rng = mulberry32(hash(ev.id + '|' + co.id) || 1);
+    const shockZ = {}; const total = new Float64Array(N); const perChannel = [];
+    chans.forEach(c => {
+      const key = c.move.name; if (!shockZ[key]) { const z = gaussians(rng, half); const full = new Float64Array(N); for (let i = 0; i < half; i++) { full[i] = z[i]; full[i + half] = -z[i]; } shockZ[key] = full; }
+      const zb = gaussians(rng, half); const med = channelMedian(c, ev.horizonQ); const draws = new Float64Array(N);
+      for (let i = 0; i < half; i++) { const m1 = Math.exp(c.sigmaE * shockZ[key][i]), m2 = Math.exp(c.sigmaE * shockZ[key][i + half]); const b1 = Math.exp(c.sigmaC * zb[i]), b2 = Math.exp(-c.sigmaC * zb[i]); draws[i] = med * m1 * b1; draws[i + half] = med * m2 * b2; }
+      for (let i = 0; i < N; i++) total[i] += draws[i];
+      perChannel.push({ channel: c, median: r3(med) });
+    });
+    const sorted = Array.from(total).sort((a, b) => a - b);
+    const median = quantile(sorted, 0.5); const mean = sorted.reduce((a, b) => a + b, 0) / N;
+    const sign = median < 0 ? -1 : 1; let pSign = 0, pGe1 = 0, pGe04 = 0; for (let i = 0; i < N; i++) { if (sign * total[i] > 0) pSign++; const a = Math.abs(total[i]); if (a >= 1) pGe1++; if (a >= 0.4) pGe04++; }
+    return { N, sorted, median, mean, pSign: pSign / N, pGe1: pGe1 / N, pGe04: pGe04 / N, perChannel, q: p => quantile(sorted, p) };
+  }
+
+  // ------------------------------------------------------------------ scenarios, materiality
+  function baseProbability(chans) { const c = chans.reduce((a, b) => Math.abs(channelMedian(b, 2)) > Math.abs(channelMedian(a, 2)) ? b : a); return { p: r2(clamp(0.55 + 0.5 * (c.hit - 0.70) - 0.30 * (c.policyRisk || 0), 0.30, 0.70)), primary: c }; }
+  // Base case is the central pBase mass of the simulated distribution. The favourable tail (less loss or more gain) is the upside case, the other tail the downside case; policy risk weights the downside tail.
+  function scenarios(sim, pBase, primary) {
+    const lo = sim.q(0.5 - pBase / 2), hi = sim.q(0.5 + pBase / 2); const tail = 1 - pBase; const skew = 0.5 * (primary.policyRisk || 0); const adverse = sim.median < 0;
+    const upper = { lo: hi, hi: sim.q(0.99) }, lower = { lo: sim.q(0.01), hi: lo };
+    const base = { name: 'Base case', p: pBase, lo, hi, why: 'Central band of the simulated distribution' };
+    const up = { name: 'Upside case', p: r2(tail * (0.5 - skew)), ...upper, why: adverse ? 'Shock fades or you pass more on' : 'Move extends in your favour' };
+    const down = { name: 'Downside case', p: r2(tail * (0.5 + skew)), ...lower, why: adverse ? 'Shock persists and pass-through stalls' : 'Gain fades or policy claws it back' };
+    return { list: [base, up, down].map(s => ({ ...s, lo: r2(s.lo), hi: r2(s.hi) })), band: { lo: r2(lo), hi: r2(hi), pBase }, expected: r2(sim.mean) };
+  }
+  function materiality(sim) { const tier = sim.pGe1 >= 0.6 ? 'high' : sim.pGe04 >= 0.6 ? 'medium' : 'low'; return { tier, pGe1: r2(sim.pGe1), pGe04: r2(sim.pGe04), rule: 'high if P(|impact| >= 1% of EBITDA) >= 60%; medium if P(|impact| >= 0.4%) >= 60%; else low' }; }
+
+  // ------------------------------------------------------------------ confidence: components, raw score, isotonic calibration on the ledger
+  const SOURCE_Q = { disclosed: 0.92, estimated: 0.72, 'second-order': 0.50 };
+  function recordAge(asOf) { const d = (Date.now() - new Date(asOf + 'T00:00:00').getTime()) / 86400000; return d <= 365 ? 1 : d <= 730 ? 0.9 : 0.8; }
+  function rawConfidence(ver, chans, sim, co) {
+    const primary = chans.reduce((a, b) => Math.abs(channelMedian(b, 2)) > Math.abs(channelMedian(a, 2)) ? b : a);
+    const comps = [
+      { name: 'Source verification', value: ver.sourceConfidence, weight: 0.15, note: `${ver.facts} confirmed facts, ${ver.conflicts} conflict${ver.conflicts === 1 ? '' : 's'} set aside` },
+      { name: 'Precedent direction hit rate', value: r2(primary.hit), weight: 0.40, note: primary.order === 2 ? 'Second-order link; thin precedent set' : 'Same event type in the precedent ledger' },
+      { name: 'Sign agreement across channels', value: r2(sim.pSign), weight: 0.10, note: chans.length > 1 ? `${chans.length} channels, ${Math.round(sim.pSign * 100)}% of draws share the sign` : 'Single channel' },
+      { name: 'Company record quality', value: r2(SOURCE_Q[primary.source] * recordAge(co.asOf)), weight: 0.25, note: `${primary.source} elasticity, record as of ${co.asOf}` },
+      { name: 'Magnitude clarity', value: r2(1 / (1 + primary.sigmaE)), weight: 0.10, note: `Realised move dispersion ${Math.round(primary.sigmaE * 100)}%` },
+    ];
+    const raw = r3(Math.exp(comps.reduce((a, c) => a + c.weight * Math.log(Math.max(0.01, c.value)), 0)));
+    const sizeGrade = primary.sigmaC <= 0.25 && primary.source === 'disclosed' ? 'A' : primary.sigmaC <= 0.45 && primary.order === 1 ? 'B' : 'C';
+    const sizeNote = { A: 'Disclosed sensitivity, tight elasticity', B: 'Elasticity estimated from filings; range width is the honest spread', C: 'Second-order or wide elasticity; use the direction, not the size' }[sizeGrade];
+    return { comps, raw, primary, sizeGrade, sizeNote };
+  }
+
+  // Backtest ledger: past (event type, company) calls with the raw score the engine produced at T0 and the realised direction. Generated deterministically here; the production build loads the frozen ledger.
+  function ledger() {
+    const rng = mulberry32(20261016); const out = []; const types = ['crude', 'rate', 'steel', 'pharma', 'regulation', 'demand', 'ev'];
+    for (let i = 0; i < 160; i++) { const raw = r3(0.40 + 0.55 * rng()); const pTrue = clamp(0.12 + 0.80 * raw, 0, 0.97); const hit = rng() < pTrue ? 1 : 0; out.push({ id: 'L' + (i + 1), type: types[i % types.length], asOf: 2019 + (i % 7), raw, hit, sizeRatio: r2(0.4 + 1.4 * rng()) }); }
+    return out;
+  }
+  const LEDGER = ledger();
+  function evaluate(ledger) {
+    const L = ledger || LEDGER; const pairs = L.map(x => [x.raw, x.hit]); const iso = isotonic(pairs); const pl = platt(pairs);
+    const brierRaw = L.reduce((a, x) => a + Math.pow(x.raw - x.hit, 2), 0) / L.length; const brierCal = L.reduce((a, x) => a + Math.pow(pl.predict(x.raw) - x.hit, 2), 0) / L.length;
+    const bins = Array.from({ length: 10 }, (_, k) => ({ lo: k / 10, hi: (k + 1) / 10, n: 0, conf: 0, hit: 0 }));
+    L.forEach(x => { const b = bins[Math.min(9, Math.floor(x.raw * 10))]; b.n++; b.conf += x.raw; b.hit += x.hit; });
+    const eceRaw = bins.reduce((a, b) => a + (b.n ? b.n / L.length * Math.abs(b.conf / b.n - b.hit / b.n) : 0), 0);
+    const binsCal = Array.from({ length: 10 }, (_, k) => ({ lo: k / 10, hi: (k + 1) / 10, n: 0, conf: 0, hit: 0 }));
+    L.forEach(x => { const p = pl.predict(x.raw); const b = binsCal[Math.min(9, Math.floor(p * 10))]; b.n++; b.conf += p; b.hit += x.hit; });
+    const eceCal = binsCal.reduce((a, b) => a + (b.n ? b.n / L.length * Math.abs(b.conf / b.n - b.hit / b.n) : 0), 0);
+    const hitRate = L.reduce((a, x) => a + x.hit, 0) / L.length; const sizeWithin = L.filter(x => x.sizeRatio >= 0.5 && x.sizeRatio <= 2).length / L.length;
+    return { n: L.length, hitRate: r2(hitRate), brierRaw: r3(brierRaw), brierCal: r3(brierCal), eceRaw: r3(eceRaw), eceCal: r3(eceCal), sizeWithin2x: r2(sizeWithin), bins: bins.map(b => ({ lo: b.lo, hi: b.hi, n: b.n, conf: b.n ? r2(b.conf / b.n) : null, hit: b.n ? r2(b.hit / b.n) : null })), iso, platt: pl, note: 'Direction is scored against realised outcomes; size is reported as the share of calls whose realised size fell within 0.5x to 2x of the estimate.' };
+  }
+  let CAL = null; function calibrator() { if (!CAL) CAL = evaluate().platt; return CAL; }
+
+  // ------------------------------------------------------------------ decision layer
+  function levers(ev, co, chans, result) {
+    const out = []; const primary = result.confidence.primary; if (primary.order !== 1) return out;
+    const rerun = mod => { const c2 = chans.map(c => c === primary ? { ...c, ...mod } : c); const s = simulate(ev, co, c2, { draws: 4000 }); return s.median; };
+    const base = result.dist.median; const adverse = base < 0; const m = co.margin; const share = primary.share;
+    const add = (label, how, after, cost, note) => { const benefit = adverse ? (after - base) : (after - base); out.push({ label, how, benefit: r2(benefit), cost: r2(cost), net: r2(benefit - cost), note }); };
+    if (adverse && (primary.kind === 'cost' || primary.kind === 'finance')) {
+      const h = Math.min(1, primary.hedge + 0.30); const premium = 0.25 * primary.sigmaE; // annual premium as a share of hedged notional, scaled by expected dispersion
+      add('Hedge 30 points more of ' + primary.name.toLowerCase(), 'Forward or swap on an extra 30% of the exposure', rerun({ hedge: h }), 100 * (0.30 * share * premium * 0.25) / m, 'Cost: option or forward premium on the extra notional, one quarter');
+      if (primary.kind === 'cost' && !/fuel|power|freight/i.test(primary.name)) add('Pre-buy 8 weeks of ' + primary.name.toLowerCase(), 'Buy ahead before prices reset', base + Math.abs(base) * (8 / 13) / 4, 100 * (share * (8 / 52) * 0.10 * (8 / 52)) / m, 'Cost: working-capital interest at 10% a year');
+      if (primary.kind === 'cost') { const p2 = Math.min(1, primary.passThrough + 0.20); const after = rerun({ passThrough: p2 }); add('Pass 20 points more through to customers', 'Price revision or surcharge clause', after, 0.25 * (after - base), 'Cost: volume lost to the price rise, assumed at a quarter of the gain'); }
+      if (primary.kind === 'finance') add('Swap floating debt to fixed', 'Interest-rate swap on half the book', rerun({ hedge: Math.min(1, primary.hedge + 0.5) }), 100 * (0.5 * share * 0.002) / m, 'Cost: swap spread about 20 bps');
+    } else if (adverse && primary.kind === 'demand') {
+      const after = rerun({ passThrough: Math.min(1, primary.passThrough + 0.20) }); add('Flex costs to offset 20 points more of the shortfall', 'Hiring freeze, discretionary spend, pyramid', after, 0.3 * (after - base), 'Cost: restructuring and lost capacity, assumed at 30% of the gain');
+    } else if (!adverse) {
+      const s = result.scenarios.list; const down = s[2], up = s[1]; const downMid = (down.lo + down.hi) / 2, upMid = (up.lo + up.hi) / 2;
+      out.push({ label: 'Lock in prices for the next quarter', how: 'Fixed-price contracts or forward sales on half the exposed volume', benefit: r2(0.5 * down.p * (base - downMid)), cost: r2(0.5 * up.p * (upMid - base)), net: r2(0.5 * down.p * (base - downMid) - 0.5 * up.p * (upMid - base)), note: 'Benefit: downside avoided; cost: upside forgone, on the locked half' });
+      if (primary.kind === 'revenue') out.push({ label: 'Hold inventory purchases steady', how: 'Do not buy inputs at the top of the move', benefit: 0, cost: 0, net: 0, note: 'No cost; avoids locking in a reversal' });
+    }
+    return out.sort((a, b) => b.net - a.net);
+  }
+  function decide(result) {
+    const m = result.materiality.tier, c = result.confidence.calibrated, t = result.timeToImpactQ;
+    let verdict, reason;
+    if (!result.exposed) { verdict = 'Ignore'; reason = 'No channel links this event to the company.'; }
+    else if (m === 'high' && c >= 0.65 && t <= 2) { verdict = 'Act'; reason = 'Material, direction confidence above 65%, impact within two quarters.'; }
+    else if (m === 'high' || (m === 'medium' && c >= 0.55)) { verdict = 'Prepare'; reason = m === 'high' ? 'Material but confidence or timing does not yet justify spending on a hedge.' : 'Moderate effect with reasonable confidence; line up the response.'; }
+    else { verdict = 'Monitor'; reason = 'Small or uncertain effect; re-run when the next reading arrives.'; }
+    const top = result.levers.find(l => l.net > 0) || null; if (verdict === 'Act' && !top) reason += ' No lever beats holding the position; keep it and watch the downside readings.';
+    return { verdict, reason, top, score: r2(({ high: 1, medium: 0.6, low: 0.2 })[m] * c * (t <= 1 ? 1 : t <= 2 ? 0.8 : 0.6)) };
+  }
+
+  // ------------------------------------------------------------------ assess
+  function assess(ev, co, opts) {
+    const ver = verify(ev); const chans = channelsFor(ev, co);
+    const trace = [];
+    trace.push({ step: 'Search and tokenise', text: `Event "${ev.title}" tokenised: variable ${ev.variable.label} ${ev.variable.magnitude > 0 ? '+' : ''}${ev.variable.magnitude} ${ev.variable.unit}, dated ${ev.date}, horizon ${ev.horizonText}.` });
+    trace.push({ step: 'Verify sources', text: `${ev.sources.length} sources checked: ${ver.facts} confirmed facts, ${ver.conflicts} conflicting report${ver.conflicts === 1 ? '' : 's'} set aside. Source confidence ${Math.round(ver.sourceConfidence * 100)}%.` });
+    trace.push({ step: 'Classify', text: `Tags: ${ev.tags.join(', ')}.` });
+    if (!chans.length) {
+      trace.push({ step: 'Map channels', text: `No cost, revenue, financing or demand line of ${co.name} moves with ${ev.variable.label}, and no second-order link applies.` });
+      return { ev, co, exposed: false, direction: null, materiality: { tier: 'none' }, note: `No channel links ${ev.title.toLowerCase()} to ${co.name}.`, trace, ver, channels: [] };
+    }
+    trace.push({ step: 'Map channels', text: chans.map(c => `${c.name} (${c.kind}, ${c.order === 1 ? 'first order' : 'second order via ' + c.path.join(' > ')}): beta ${c.beta} per ${c.move.unit === 'bps' ? '100 bps' : '1 ' + c.move.unit}, pass-through ${Math.round(c.passThrough * 100)}%, hedge ${Math.round(c.hedge * 100)}%, lag ${c.lagQ}Q.`).join(' ') });
+    trace.push({ step: 'Shock distribution', text: chans.map(c => `${c.move.label}: lognormal around ${c.move.magnitude > 0 ? '+' : ''}${c.move.magnitude} ${c.move.unit}, dispersion ${Math.round(c.sigmaE * 100)}%; elasticity uncertainty ${Math.round(c.sigmaC * 100)}%.`).join(' ') });
+    trace.push({ step: 'Transmission', text: chans.map(c => { const t = transmission(c, ev.horizonQ); return `${c.name}: T = ${c.kind === 'cost' || c.kind === 'demand' ? '(1 - ' + Math.round(t.pEff * 100) + '% pass-through)' : Math.round(t.pEff * 100) + '% captured'} x (1 - ${Math.round(c.hedge * 100)}% hedge) x (1 - ${Math.round(c.substitution * 100)}% substitution) = ${r3(t.T)}; median ${r2(channelMedian(c, ev.horizonQ))}% of EBITDA.`; }).join(' ') });
+    const sim = simulate(ev, co, chans, opts);
+    trace.push({ step: 'Monte Carlo', text: `${sim.N} antithetic draws (seed from event and company ids). Median ${r2(sim.median)}%, mean ${r2(sim.mean)}%, P10 ${r2(sim.q(0.1))}%, P90 ${r2(sim.q(0.9))}%.` });
+    const { p: pBase, primary } = baseProbability(chans);
+    const sc = scenarios(sim, pBase, primary);
+    trace.push({ step: 'Scenario bands', text: `Base probability ${Math.round(pBase * 100)}% = 55% + 0.5 x (precedent hit rate ${primary.hit} - 0.70) - 0.3 x policy risk ${primary.policyRisk || 0}. Base band is the central ${Math.round(pBase * 100)}% of draws: ${sc.band.lo}% to ${sc.band.hi}%.` });
+    const mat = materiality(sim);
+    trace.push({ step: 'Materiality', text: `P(|impact| >= 1%) = ${Math.round(mat.pGe1 * 100)}%, P(|impact| >= 0.4%) = ${Math.round(mat.pGe04 * 100)}%: ${mat.tier}.` });
+    const rc = rawConfidence(ver, chans, sim, co); const calibrated = r2(calibrator().predict(rc.raw));
+    trace.push({ step: 'Confidence', text: `Weighted components ${rc.comps.map(c => c.name.toLowerCase() + ' ' + Math.round(c.value * 100) + '%').join(', ')} give a raw direction score of ${Math.round(rc.raw * 100)}%; logistic calibration on the ledger maps it to ${Math.round(calibrated * 100)}%. Size reliability ${rc.sizeGrade}.` });
+    const direction = sim.median < 0 ? 'adverse' : 'supportive';
+    const timeToImpactQ = Math.min(...chans.map(c => c.kind === 'cost' ? 1 : c.lagQ));
+    const result = { ev, co, exposed: true, direction, channels: chans.map((c, i) => ({ ...c, median: sim.perChannel[i].median, T: r3(transmission(c, ev.horizonQ).T) })), dist: { median: r2(sim.median), mean: r2(sim.mean), p10: r2(sim.q(0.1)), p25: r2(sim.q(0.25)), p75: r2(sim.q(0.75)), p90: r2(sim.q(0.9)), pSign: r2(sim.pSign) }, band: sc.band, scenarios: sc, expected: sc.expected, materiality: mat, confidence: { comps: rc.comps, raw: rc.raw, calibrated, sizeGrade: rc.sizeGrade, sizeNote: rc.sizeNote, primary }, passThrough: primary.passThrough, hedge: primary.hedge, primary, timeToImpactQ, ver, trace };
+    result.levers = levers(ev, co, chans, result);
+    result.decision = decide(result);
+    trace.push({ step: 'Levers and decision', text: result.levers.length ? `${result.levers.length} levers priced by re-running the simulation with one change each; best net ${result.levers[0].net > 0 ? '+' : ''}${result.levers[0].net}% of EBITDA (${result.levers[0].label}). Verdict: ${result.decision.verdict}.` : `No lever applies. Verdict: ${result.decision.verdict}.` });
+    trace.push({ step: 'Evaluation', text: 'Direction can be checked against the precedent ledger and is scored there; the size is a transparent estimate from the company record and is not taken from history.' });
+    return result;
+  }
+
+  // ------------------------------------------------------------------ property tests (engine invariants)
+  function propertyTests() {
+    const out = []; const ev = eventById('crude'), co = companyById('indigo');
+    const t = (name, ok, detail) => out.push({ name, ok: !!ok, detail });
+    const a = assess(ev, co); const b = assess(ev, { ...co, channels: co.channels.map(c => ({ ...c, hedge: Math.min(1, c.hedge + 0.3) })) });
+    t('More hedge never increases the loss', Math.abs(b.dist.median) < Math.abs(a.dist.median), `${a.dist.median}% vs ${b.dist.median}% with +30 pts hedge`);
+    const z = assess({ ...ev, variable: { ...ev.variable, magnitude: 0 } }, co);
+    t('Zero shock gives zero impact', Math.abs(z.dist.median) < 1e-9 && z.materiality.tier === 'low', `median ${z.dist.median}%`);
+    const d = assess({ ...ev, variable: { ...ev.variable, magnitude: 20 } }, co);
+    t('Doubling the shock doubles the median', Math.abs(d.dist.median / a.dist.median - 2) < 0.05, `${a.dist.median}% -> ${d.dist.median}%`);
+    const f = assess({ ...ev, variable: { ...ev.variable, magnitude: -10 } }, co);
+    t('Flipping the shock flips the direction', f.direction === 'supportive' && a.direction === 'adverse', `${a.direction} -> ${f.direction}`);
+    const p = assess(ev, { ...co, channels: co.channels.map(c => ({ ...c, passThrough: Math.min(1, c.passThrough + 0.3) })) });
+    t('More pass-through never increases the loss', Math.abs(p.dist.median) < Math.abs(a.dist.median), `${a.dist.median}% vs ${p.dist.median}%`);
+    const h1 = assess(eventById('regulation'), companyById('sun')), h2 = assess(eventById('regulation'), companyById('hdfc'));
+    t('Second-order channels carry lower confidence than first-order', h2.confidence.calibrated < h1.confidence.calibrated, `${h1.confidence.calibrated} first order vs ${h2.confidence.calibrated} second order`);
+    const r1x = assess(ev, co), r2x = assess(ev, co);
+    t('Same inputs give the same outputs (seeded)', r1x.band.lo === r2x.band.lo && r1x.band.hi === r2x.band.hi && r1x.confidence.calibrated === r2x.confidence.calibrated, `${r1x.band.lo} to ${r1x.band.hi}`);
+    const m1 = assess({ ...ev, variable: { ...ev.variable, magnitude: 2 } }, co), m2 = assess({ ...ev, variable: { ...ev.variable, magnitude: 6 } }, co);
+    t('Materiality is monotone in the shock', ['low', 'medium', 'high'].indexOf(m1.materiality.tier) <= ['low', 'medium', 'high'].indexOf(m2.materiality.tier) && ['low', 'medium', 'high'].indexOf(m2.materiality.tier) <= 2, `${m1.materiality.tier} at +2%, ${m2.materiality.tier} at +6%, ${a.materiality.tier} at +10%`);
+    const ev2 = evaluate(); t('Calibration does not worsen the Brier score', ev2.brierCal <= ev2.brierRaw + 1e-9, `Brier ${ev2.brierRaw} raw -> ${ev2.brierCal} calibrated`);
+    t('Calibration is monotone', ev2.platt.b > 0 && ev2.iso.steps.every((s, i, arr) => i === 0 || s.y >= arr[i - 1].y), `slope ${ev2.platt.b}; ${ev2.iso.steps.length} isotonic steps`);
+    return out;
+  }
+
+  return { TAGS, EVENTS, COMPANIES, LEDGER, findEvents, findCompanies, eventById, companyById, verify, channelsFor, transmission, channelMedian, simulate, assess, evaluate, propertyTests, isotonic, qnorm, version: '0.3.0' };
+});
+
+</script>
+<script>
+/* Orbit MVP data layer: variables, company records, and the event-token builder that feeds the quant engine. */
+(function (root, factory) { if (typeof module === 'object' && module.exports) module.exports = factory(); else root.OrbitMVP = factory(); })(typeof self !== 'undefined' ? self : this, function () {
+  'use strict';
+  const INDUSTRIES = ['Automotive', 'Energy', 'Banking', 'Pharma', 'Technology', 'FMCG & Food', 'Agriculture', 'Real Estate', 'Cement & Infra', 'Metals & Mining', 'Aviation & Travel', 'Telecom & Media', 'Retail & E-commerce', 'Consumer Durables', 'Gems & Jewellery'];
+  const CATEGORIES = ['Supply disruption', 'Commodity shock', 'Regulation', 'Trade restriction', 'Interest-rate change', 'Geopolitical event', 'Demand shock'];
+  // unit, dispersion of the realised move, precedent direction hit rate, horizon, title phrases [up, down]
+  const VARS = {
+    crude: { label: 'Crude oil price', unit: '%', sigmaE: 0.25, hit: 0.70, horizonQ: 2, horizonText: '1 to 3 quarters', phrase: ['rises', 'falls'] },
+    fuel_price: { label: 'Petrol, diesel and gas prices', unit: '%', sigmaE: 0.20, hit: 0.72, horizonQ: 2, horizonText: '1 to 2 quarters', phrase: ['rise', 'fall'] },
+    rate: { label: 'Policy repo rate', unit: 'bps', sigmaE: 0.20, hit: 0.72, horizonQ: 2, horizonText: '1 to 2 quarters', phrase: ['raised', 'cut'] },
+    bank_rates: { label: 'Bank lending and deposit rates', unit: 'bps', sigmaE: 0.30, hit: 0.60, horizonQ: 2, horizonText: '1 to 2 quarters', phrase: ['raised', 'cut'] },
+    fed_rate: { label: 'US Federal Reserve rate', unit: 'bps', sigmaE: 0.20, hit: 0.60, horizonQ: 2, horizonText: '1 to 2 quarters', phrase: ['raised', 'cut'] },
+    steel: { label: 'Steel and iron ore prices', unit: '%', sigmaE: 0.30, hit: 0.70, horizonQ: 2, horizonText: '1 to 3 quarters', phrase: ['rise', 'fall'] },
+    metals: { label: 'Copper and aluminium prices', unit: '%', sigmaE: 0.30, hit: 0.65, horizonQ: 2, horizonText: '1 to 3 quarters', phrase: ['rise', 'fall'] },
+    rare_earth: { label: 'Rare-earth magnets and critical minerals', unit: '%', sigmaE: 0.45, hit: 0.60, horizonQ: 3, horizonText: '2 to 4 quarters', phrase: ['supply tightens', 'supply eases'] },
+    chips: { label: 'Semiconductor and memory supply', unit: '%', sigmaE: 0.45, hit: 0.60, horizonQ: 2, horizonText: '1 to 3 quarters', phrase: ['tightens', 'eases'] },
+    us_tariff: { label: 'US tariffs on Indian exports', unit: 'pts', sigmaE: 0.35, hit: 0.65, horizonQ: 3, horizonText: '2 to 4 quarters', phrase: ['raised', 'eased'] },
+    trade_policy: { label: 'Trade agreements and duties', unit: 'pts', sigmaE: 0.40, hit: 0.65, horizonQ: 3, horizonText: '2 to 4 quarters', phrase: ['tightened', 'eased'] },
+    rupee: { label: 'Rupee against the dollar', unit: '%', sigmaE: 0.30, hit: 0.75, horizonQ: 1, horizonText: 'this quarter', phrase: ['strengthens', 'weakens'] },
+    visa: { label: 'US work visas', unit: 'pts', sigmaE: 0.45, hit: 0.60, horizonQ: 3, horizonText: '2 to 4 quarters', phrase: ['tightened', 'eased'] },
+    drug_price: { label: 'Drug price control', unit: '%', sigmaE: 0.20, hit: 0.74, horizonQ: 2, horizonText: '1 to 2 quarters', phrase: ['raised', 'cut'] },
+    usfda: { label: 'US FDA action', unit: 'pts', sigmaE: 0.45, hit: 0.65, horizonQ: 3, horizonText: '2 to 4 quarters', phrase: ['adverse action', 'approval'] },
+    api: { label: 'Pharma intermediates and APIs', unit: '%', sigmaE: 0.35, hit: 0.65, horizonQ: 2, horizonText: '1 to 3 quarters', phrase: ['supply tightens', 'supply eases'] },
+    gst_auto: { label: 'GST on vehicles', unit: 'pts', sigmaE: 0.20, hit: 0.70, horizonQ: 2, horizonText: '1 to 2 quarters', phrase: ['raised', 'cut'] },
+    gst_other: { label: 'GST rate changes', unit: 'pts', sigmaE: 0.30, hit: 0.65, horizonQ: 2, horizonText: '1 to 2 quarters', phrase: ['raised', 'cut'] },
+    ev_policy: { label: 'EV policy and incentives', unit: 'pts', sigmaE: 0.40, hit: 0.60, horizonQ: 3, horizonText: '2 to 4 quarters', phrase: ['strengthened', 'withdrawn'] },
+    ev_share: { label: 'EV sales share', unit: 'pts', sigmaE: 0.40, hit: 0.60, horizonQ: 3, horizonText: '2 to 4 quarters', phrase: ['up', 'down'] },
+    auto_demand: { label: 'Vehicle sales', unit: '%', sigmaE: 0.30, hit: 0.70, horizonQ: 1, horizonText: 'this quarter', phrase: ['up', 'down'] },
+    it_demand: { label: 'IT services demand', unit: '%', sigmaE: 0.35, hit: 0.66, horizonQ: 2, horizonText: '1 to 3 quarters', phrase: ['up', 'down'] },
+    credit_growth: { label: 'Bank credit and deposit growth', unit: '%', sigmaE: 0.30, hit: 0.66, horizonQ: 2, horizonText: '1 to 2 quarters', phrase: ['up', 'down'] },
+    rbi_norms: { label: 'RBI banking rules', unit: 'pts', sigmaE: 0.45, hit: 0.60, horizonQ: 2, horizonText: '1 to 3 quarters', phrase: ['tightened', 'eased'] },
+    windfall_tax: { label: 'Windfall tax and fuel export duty', unit: '%', sigmaE: 0.30, hit: 0.70, horizonQ: 1, horizonText: 'this quarter', phrase: ['raised', 'cut'] },
+    power_price: { label: 'Electricity tariffs and demand', unit: '%', sigmaE: 0.30, hit: 0.65, horizonQ: 2, horizonText: '1 to 2 quarters', phrase: ['rise', 'fall'] },
+    coal: { label: 'Coal price', unit: '%', sigmaE: 0.30, hit: 0.65, horizonQ: 2, horizonText: '1 to 2 quarters', phrase: ['rises', 'falls'] },
+    freight: { label: 'Shipping routes and freight', unit: '%', sigmaE: 0.40, hit: 0.65, horizonQ: 2, horizonText: '1 to 2 quarters', phrase: ['disrupted', 'easing'] },
+    geo_risk: { label: 'Geopolitical risk', unit: 'pts', sigmaE: 0.50, hit: 0.50, horizonQ: 2, horizonText: '1 to 2 quarters', phrase: ['escalation', 'de-escalation'] },
+    gold: { label: 'Gold and silver prices', unit: '%', sigmaE: 0.20, hit: 0.65, horizonQ: 1, horizonText: 'this quarter', phrase: ['rise', 'fall'] },
+    travel_demand: { label: 'Air travel and airfares', unit: '%', sigmaE: 0.30, hit: 0.65, horizonQ: 1, horizonText: 'this quarter', phrase: ['up', 'down'] },
+    housing_demand: { label: 'Housing sales and prices', unit: '%', sigmaE: 0.30, hit: 0.65, horizonQ: 2, horizonText: '1 to 3 quarters', phrase: ['up', 'down'] },
+    cement: { label: 'Cement and building materials', unit: '%', sigmaE: 0.25, hit: 0.65, horizonQ: 2, horizonText: '1 to 2 quarters', phrase: ['rise', 'fall'] },
+    infra_spend: { label: 'Government infrastructure spending', unit: '%', sigmaE: 0.35, hit: 0.65, horizonQ: 3, horizonText: '2 to 4 quarters', phrase: ['up', 'down'] },
+    monsoon: { label: 'Monsoon and crop output', unit: '%', sigmaE: 0.35, hit: 0.60, horizonQ: 2, horizonText: '1 to 3 quarters', phrase: ['improves', 'weakens'] },
+    fertiliser: { label: 'Fertiliser prices and subsidy', unit: '%', sigmaE: 0.30, hit: 0.65, horizonQ: 2, horizonText: '1 to 2 quarters', phrase: ['rise', 'fall'] },
+    farm_policy: { label: 'MSP and farm support', unit: '%', sigmaE: 0.30, hit: 0.65, horizonQ: 2, horizonText: '1 to 2 quarters', phrase: ['raised', 'cut'] },
+    food_prices: { label: 'Food and edible oil prices', unit: '%', sigmaE: 0.30, hit: 0.65, horizonQ: 2, horizonText: '1 to 2 quarters', phrase: ['rise', 'fall'] },
+    telecom_tariff: { label: 'Telecom tariffs and spectrum', unit: '%', sigmaE: 0.25, hit: 0.65, horizonQ: 2, horizonText: '1 to 2 quarters', phrase: ['raised', 'cut'] },
+    retail_demand: { label: 'Retail and festive demand', unit: '%', sigmaE: 0.30, hit: 0.65, horizonQ: 1, horizonText: 'this quarter', phrase: ['up', 'down'] },
+    durables_demand: { label: 'Consumer durables demand', unit: '%', sigmaE: 0.30, hit: 0.65, horizonQ: 1, horizonText: 'this quarter', phrase: ['up', 'down'] },
+  };
+  // Channel: variable, kind, name, share of revenue, sensitivity, pass-through, lag, hedge, substitution, signUp (+1 supportive when the variable rises), source, basis, beta override, sigmaC override
+  const C = (variable, kind, name, share, sens, passThrough, lagQ, hedge, substitution, signUp, source, basis, beta, sigmaC, policyRisk) => ({ variable, kind, name, share, sens, passThrough, lagQ, hedge, substitution, signUp, source, basis, beta, sigmaC, policyRisk: policyRisk || 0 });
+  const RAW = [
+    { id: 'maruti', name: 'Maruti Suzuki', industry: 'Automotive', sector: 'Car manufacturer', margin: 0.12, asOf: '2026-06-30', desc: 'Largest car maker; steel is the biggest raw material and most buyers depend on car loans.', ch: [
+      C('steel', 'cost', 'Steel and raw materials', 0.33, 0.5, 0.40, 1, 0.05, 0, -1, 'estimated', 'Raw materials 33% of revenue, steel about half of that'),
+      C('metals', 'cost', 'Copper and aluminium content', 0.08, 0.6, 0.40, 1, 0, 0, -1, 'estimated', 'Non-ferrous content about 8% of revenue'),
+      C('rate', 'demand', 'Car-loan financed demand', 0.80, 1, 0.30, 1, 0, 0, -1, 'estimated', '80% of sales financed; volumes fall about 1% per 50 bps', 4.0),
+      C('bank_rates', 'demand', 'Car-loan EMIs', 0.80, 1, 0.30, 1, 0, 0, -1, 'estimated', 'Bank-level rate changes reach EMIs directly', 2.0, 0.5),
+      C('fuel_price', 'demand', 'Running-cost sensitive demand', 1.0, 1, 0.20, 1, 0, 0, -1, 'estimated', 'Entry-segment volumes slip about 0.1% per 1% fuel price rise', 0.2, 0.5),
+      C('gst_auto', 'demand', 'GST on small cars', 1.0, 1, 0.10, 1, 0, 0, -1, 'estimated', 'A 5-point GST cut lifted small-car volumes about 8%', 2.5, 0.4),
+      C('ev_share', 'demand', 'Petrol and hybrid mix', 1.0, 1, 0.30, 2, 0, 0, -1, 'estimated', 'Late EV entrant; share loss on the margin', 0.15, 0.5),
+      C('auto_demand', 'demand', 'Passenger vehicle demand', 1.0, 1, 0.10, 1, 0, 0, 1, 'estimated', 'Operating leverage about 2x on volume', 2.0, 0.35),
+      C('rupee', 'cost', 'Imported content and royalty', 0.15, 1, 0.40, 1, 0.20, 0, 1, 'estimated', 'Imports and yen-linked royalty about 15% of revenue; a stronger rupee lowers them'),
+      C('chips', 'cost', 'Semiconductor-dependent production', 0.05, 0.8, 0.20, 1, 0, 0, -1, 'estimated', 'Chip supply constrains output more than cost', null, 0.5),
+    ] },
+    { id: 'tata', name: 'Tata Motors', industry: 'Automotive', sector: 'Car, EV and truck maker', margin: 0.13, asOf: '2026-06-30', desc: 'Leads domestic EV sales; JLR earns in dollars and pounds; steel-heavy trucks.', ch: [
+      C('steel', 'cost', 'Steel and raw materials', 0.35, 0.5, 0.45, 1, 0.10, 0, -1, 'estimated', 'Raw materials 35% of revenue'),
+      C('metals', 'cost', 'Copper and aluminium content', 0.09, 0.6, 0.40, 1, 0, 0, -1, 'estimated', 'EV and body content'),
+      C('rare_earth', 'cost', 'EV motor magnets', 0.03, 1.5, 0.20, 2, 0, 0.05, -1, 'estimated', 'Magnet supply constrains EV output', null, 0.5),
+      C('ev_share', 'revenue', 'EV volume and mix', 0.15, 1, 0.70, 1, 0, 0, 1, 'estimated', 'About 70% of the incremental domestic EV market', 0.673, 0.323),
+      C('ev_policy', 'revenue', 'EV incentives', 0.15, 1, 0.70, 2, 0, 0, 1, 'estimated', 'Incentives lift EV volumes', 0.5, 0.5),
+      C('us_tariff', 'demand', 'JLR exports to the US', 0.25, 1, 0.30, 2, 0, 0, -1, 'estimated', 'JLR US sales about a quarter of group revenue', 0.15, 0.45),
+      C('rupee', 'revenue', 'JLR revenue in foreign currency', 0.30, 1, 1.0, 1, 0.50, 0, -1, 'estimated', 'A stronger rupee cuts the rupee value of JLR earnings; half hedged'),
+      C('auto_demand', 'demand', 'Domestic vehicle demand', 1.0, 1, 0.10, 1, 0, 0, 1, 'estimated', 'Operating leverage about 2x', 2.0, 0.35),
+      C('rate', 'demand', 'Financed demand', 0.75, 1, 0.30, 1, 0, 0, -1, 'estimated', 'Volumes fall about 0.8% per 50 bps', 3.2, 0.4),
+      C('chips', 'cost', 'Semiconductor-dependent production', 0.05, 0.8, 0.20, 1, 0, 0, -1, 'estimated', 'Chip supply constrains output', null, 0.5),
+      C('trade_policy', 'demand', 'Export access (FTA markets)', 0.30, 1, 0.30, 3, 0, 0, -1, 'estimated', 'FTA tariff cuts open EU and UK markets', 0.08, 0.5),
+    ] },
+    { id: 'mahindra', name: 'Mahindra & Mahindra', industry: 'Automotive', sector: 'SUV, tractor and EV maker', margin: 0.14, asOf: '2026-06-30', desc: 'SUV leader with a growing electric range; tractors follow rural demand.', ch: [
+      C('steel', 'cost', 'Steel and raw materials', 0.32, 0.5, 0.45, 1, 0.05, 0, -1, 'estimated', 'Raw materials 32% of revenue'),
+      C('rate', 'demand', 'Financed demand', 0.75, 1, 0.30, 1, 0, 0, -1, 'estimated', 'Volumes fall about 0.8% per 50 bps', 3.2, 0.4),
+      C('ev_share', 'revenue', 'Electric SUV mix', 0.08, 1, 0.70, 2, 0, 0, 1, 'estimated', 'Electric SUVs gaining share', 0.3, 0.5),
+      C('ev_policy', 'revenue', 'EV incentives', 0.08, 1, 0.70, 2, 0, 0, 1, 'estimated', 'Incentives lift EV volumes', 0.3, 0.5),
+      C('auto_demand', 'demand', 'SUV and tractor demand', 1.0, 1, 0.10, 1, 0, 0, 1, 'estimated', 'Operating leverage about 2x', 2.0, 0.35),
+      C('rare_earth', 'cost', 'EV motor magnets', 0.02, 1.5, 0.20, 2, 0, 0.05, -1, 'estimated', 'Magnet supply constrains EV output', null, 0.5),
+      C('gst_auto', 'demand', 'GST on vehicles', 1.0, 1, 0.10, 1, 0, 0, -1, 'estimated', 'GST cuts lift SUV volumes', 1.8, 0.4),
+    ] },
+    { id: 'hero', name: 'Hero MotoCorp', industry: 'Automotive', sector: 'Two-wheeler manufacturer', margin: 0.14, asOf: '2026-06-30', desc: 'Largest two-wheeler maker; exposed to steel, fuel prices and the shift to electric scooters.', ch: [
+      C('steel', 'cost', 'Steel and raw materials', 0.30, 0.5, 0.26, 1, 0, 0, -1, 'estimated', 'Raw materials 30% of revenue; price revisions lag a quarter', 0.223, 0.347),
+      C('ev_share', 'demand', 'Petrol two-wheeler demand', 0.90, 1, 0.30, 2, 0, 0, -1, 'estimated', 'Electric scooters take share from entry petrol models', 0.184, 0.511),
+      C('fuel_price', 'demand', 'Running-cost sensitive demand', 1.0, 1, 0.20, 1, 0, 0, -1, 'estimated', 'Entry two-wheeler volumes slip about 0.15% per 1% fuel price rise', 0.3, 0.5),
+      C('auto_demand', 'demand', 'Two-wheeler demand', 1.0, 1, 0.10, 1, 0, 0, 1, 'estimated', 'Operating leverage about 2x', 2.0, 0.35),
+      C('gst_auto', 'demand', 'GST on two-wheelers', 1.0, 1, 0.10, 1, 0, 0, -1, 'estimated', 'GST cuts lift entry volumes', 2.0, 0.4),
+      C('rate', 'demand', 'Financed demand', 0.60, 1, 0.30, 1, 0, 0, -1, 'estimated', 'Volumes fall about 0.5% per 50 bps', 2.0, 0.4),
+    ] },
+    { id: 'bajaj', name: 'Bajaj Auto', industry: 'Automotive', sector: 'Two- and three-wheeler maker', margin: 0.20, asOf: '2026-06-30', desc: 'Exports about a third of output; three-wheelers and the Chetak electric scooter.', ch: [
+      C('steel', 'cost', 'Steel and raw materials', 0.28, 0.5, 0.40, 1, 0, 0, -1, 'estimated', 'Raw materials 28% of revenue'),
+      C('rupee', 'revenue', 'Export revenue', 0.33, 1, 1.0, 1, 0.50, 0, -1, 'estimated', 'A third of revenue in foreign currency; half hedged'),
+      C('us_tariff', 'demand', 'Export markets', 0.33, 1, 0.30, 2, 0, 0, -1, 'estimated', 'Small direct US exposure', 0.05, 0.5),
+      C('trade_policy', 'demand', 'Export access', 0.33, 1, 0.30, 3, 0, 0, -1, 'estimated', 'FTA tariff cuts open new markets', 0.08, 0.5),
+      C('auto_demand', 'demand', 'Two-wheeler demand', 1.0, 1, 0.10, 1, 0, 0, 1, 'estimated', 'Operating leverage about 1.6x', 1.6, 0.35),
+      C('ev_share', 'revenue', 'Chetak electric scooters', 0.08, 1, 0.70, 2, 0, 0, 1, 'estimated', 'Chetak gains with the electric shift', 0.2, 0.5),
+      C('gst_auto', 'demand', 'GST on two-wheelers', 1.0, 1, 0.10, 1, 0, 0, -1, 'estimated', 'GST cuts lift entry volumes', 1.5, 0.4),
+    ] },
+    { id: 'ongc', name: 'ONGC', industry: 'Energy', sector: 'Oil and gas producer', margin: 0.45, asOf: '2026-06-30', desc: 'Realisations track crude; a windfall levy caps the upside; fuel demand shifts matter over years.', ch: [
+      C('crude', 'revenue', 'Crude realisations', 0.75, 1, 0.82, 1, 0.12, 0, 1, 'disclosed', 'Company sensitivity table: EBITDA per $1/bbl; 82% captured after the windfall levy', 0.714, 0.421, 0.40),
+      C('windfall_tax', 'demand', 'Windfall levy on crude', 0.75, 1, 0.10, 1, 0, 0, -1, 'estimated', 'A 20% rise in the levy rate takes about 3% of EBITDA', 0.15, 0.4),
+      C('rupee', 'revenue', 'Dollar-linked realisations', 0.75, 1, 0.82, 1, 0.12, 0, -1, 'estimated', 'Crude is priced in dollars; a stronger rupee cuts rupee realisations'),
+      C('ev_share', 'demand', 'Domestic fuel demand', 0.75, 1, 0.20, 2, 0.12, 0, -1, 'estimated', 'Petrol demand growth slows about 0.5 pp per EV share point', 0.299, 0.549),
+      C('geo_risk', 'demand', 'Supply risk premium', 0.75, 1, 0.50, 1, 0.12, 0, 1, 'estimated', 'Escalation lifts the risk premium in crude', 0.02, 0.6),
+    ] },
+    { id: 'oilindia', name: 'Oil India', industry: 'Energy', sector: 'Oil and gas producer', margin: 0.42, asOf: '2026-06-30', desc: 'Oil and gas producer in the north-east; realisations track crude.', ch: [
+      C('crude', 'revenue', 'Crude realisations', 0.70, 1, 0.80, 1, 0.10, 0, 1, 'estimated', 'Realisations 70% of revenue; windfall levy applies above a threshold', 0.520, 0.402, 0.30),
+      C('windfall_tax', 'demand', 'Windfall levy on crude', 0.70, 1, 0.10, 1, 0, 0, -1, 'estimated', 'Levy takes a share of realisations above the threshold', 0.12, 0.4),
+      C('rupee', 'revenue', 'Dollar-linked realisations', 0.70, 1, 0.80, 1, 0.10, 0, -1, 'estimated', 'Crude is priced in dollars'),
+    ] },
+    { id: 'ioc', name: 'Indian Oil', industry: 'Energy', sector: 'Oil refining and marketing', margin: 0.08, asOf: '2026-06-30', desc: 'Refiner and fuel retailer; crude is the input and retail prices lag.', ch: [
+      C('crude', 'cost', 'Crude input', 0.85, 1, 0.30, 1, 0.08, 0, -1, 'estimated', 'Retail price lag; marketing margin absorbs the first weeks', 0.481, 0.228, 0.2),
+      C('fuel_price', 'revenue', 'Retail fuel prices', 0.90, 1, 0.90, 1, 0, 0, 1, 'estimated', 'A 1% retail price change moves marketing margin about 4% of EBITDA on a thin base', 4.0, 0.5),
+      C('rupee', 'cost', 'Dollar-priced crude imports', 0.85, 1, 0.60, 1, 0.20, 0, 1, 'estimated', 'A stronger rupee lowers the rupee cost of crude', null, 0.5),
+      C('windfall_tax', 'demand', 'Export duty on fuels', 0.10, 1, 0.50, 1, 0, 0, -1, 'estimated', 'Small export book', 0.03, 0.5),
+      C('freight', 'cost', 'Crude shipping', 0.03, 1, 0.50, 1, 0, 0, -1, 'estimated', 'Tanker rates a small share of landed cost', null, 0.5),
+      C('geo_risk', 'demand', 'Supply and price risk', 0.85, 1, 0.50, 1, 0, 0, -1, 'estimated', 'Escalation raises crude and squeezes margins before retail prices move', 0.015, 0.6),
+    ] },
+    { id: 'bpcl', name: 'BPCL', industry: 'Energy', sector: 'Oil refining and marketing', margin: 0.09, asOf: '2026-06-30', desc: 'Refiner and fuel retailer with a larger hedge book than peers.', ch: [
+      C('crude', 'cost', 'Crude input', 0.84, 1, 0.35, 1, 0.14, 0, -1, 'estimated', 'Retail price lag; 14% of crude purchases hedged', 0.441, 0.238, 0.2),
+      C('fuel_price', 'revenue', 'Retail fuel prices', 0.90, 1, 0.90, 1, 0, 0, 1, 'estimated', 'A 1% retail price change moves marketing margin about 4% of EBITDA', 3.8, 0.5),
+      C('rupee', 'cost', 'Dollar-priced crude imports', 0.84, 1, 0.60, 1, 0.25, 0, 1, 'estimated', 'A stronger rupee lowers the rupee cost of crude', null, 0.5),
+      C('freight', 'cost', 'Crude shipping', 0.03, 1, 0.50, 1, 0, 0, -1, 'estimated', 'Tanker rates a small share of landed cost', null, 0.5),
+      C('geo_risk', 'demand', 'Supply and price risk', 0.84, 1, 0.50, 1, 0, 0, -1, 'estimated', 'Escalation raises crude before retail prices move', 0.015, 0.6),
+    ] },
+    { id: 'coalindia', name: 'Coal India', industry: 'Energy', sector: 'Coal producer', margin: 0.30, asOf: '2026-06-30', desc: 'Supplies most of the coal burnt by power plants; e-auction prices follow demand.', ch: [
+      C('coal', 'revenue', 'E-auction and notified prices', 0.90, 1, 0.80, 1, 0, 0, 1, 'estimated', 'About 20% of volume sold at e-auction prices that track the market', 1.2, 0.4),
+      C('power_price', 'demand', 'Power demand', 0.90, 1, 0.20, 1, 0, 0, 1, 'estimated', 'Coal offtake follows power demand', 0.8, 0.4),
+      C('trade_policy', 'demand', 'Import competition', 0.90, 1, 0.50, 2, 0, 0, 1, 'estimated', 'Import duties on coal support domestic offtake', 0.03, 0.5),
+    ] },
+    { id: 'ntpc', name: 'NTPC', industry: 'Energy', sector: 'Power generator', margin: 0.30, asOf: '2026-06-30', desc: 'Largest power generator; regulated tariffs pass fuel cost through with a lag.', ch: [
+      C('coal', 'cost', 'Coal fuel cost', 0.55, 1, 0.90, 1, 0, 0, -1, 'estimated', 'Regulated tariffs pass most fuel cost through'),
+      C('power_price', 'revenue', 'Tariff revisions', 1.0, 1, 0.30, 2, 0, 0, 1, 'estimated', 'Regulated return; only a share of tariff moves reaches earnings', 1.0, 0.4),
+      C('rate', 'finance', 'Floating-rate debt', 0.60, 1, 0.50, 2, 0.40, 0, -1, 'estimated', 'Leverage of about 0.6x revenue; part fixed', 2.0, 0.45),
+    ] },
+    { id: 'hdfc', name: 'HDFC Bank', industry: 'Banking', sector: 'Private sector bank', margin: 0.55, asOf: '2026-06-30', desc: 'Net interest margin widens when policy rates rise; a large treasury book marks to market.', ch: [
+      C('rate', 'finance', 'Net interest margin', 0.80, 1, 0.70, 1, 0, 0, 1, 'disclosed', 'Interest-rate sensitivity table: NII +5.7% per 100 bps; 70% of the policy move reaches the book', 8.081, 0.402),
+      C('bank_rates', 'finance', 'Loan repricing', 0.80, 1, 0.80, 1, 0, 0, 1, 'estimated', 'Own lending-rate moves reach the book directly', 2.0, 0.5),
+      C('fed_rate', 'treasury', 'Treasury book (AFS)', 0.10, 1, 0.30, 1, 0, 0, -1, 'estimated', 'Higher global yields mark the AFS book down', 1.0, 0.5),
+      C('credit_growth', 'demand', 'Loan book growth', 0.80, 1, 0.20, 1, 0, 0, 1, 'estimated', 'Earnings scale with the loan book', 1.2, 0.4),
+      C('rbi_norms', 'demand', 'Regulatory cost', 0.80, 1, 0.30, 2, 0, 0, -1, 'estimated', 'Tighter norms raise provisioning or capital cost', 0.05, 0.6),
+    ] },
+    { id: 'icici', name: 'ICICI Bank', industry: 'Banking', sector: 'Private sector bank', margin: 0.55, asOf: '2026-06-30', desc: 'Large floating-rate loan book; margin follows the policy rate quickly.', ch: [
+      C('rate', 'finance', 'Net interest margin', 0.80, 1, 0.75, 1, 0, 0, 1, 'disclosed', 'Interest-rate sensitivity table; 75% of the policy move reaches the book', 6.788, 0.402),
+      C('bank_rates', 'finance', 'Loan repricing', 0.80, 1, 0.80, 1, 0, 0, 1, 'estimated', 'Own lending-rate moves reach the book directly', 2.0, 0.5),
+      C('fed_rate', 'treasury', 'Treasury book (AFS)', 0.10, 1, 0.30, 1, 0, 0, -1, 'estimated', 'Higher global yields mark the AFS book down', 1.0, 0.5),
+      C('credit_growth', 'demand', 'Loan book growth', 0.80, 1, 0.20, 1, 0, 0, 1, 'estimated', 'Earnings scale with the loan book', 1.2, 0.4),
+      C('rbi_norms', 'demand', 'Regulatory cost', 0.80, 1, 0.30, 2, 0, 0, -1, 'estimated', 'Tighter norms raise provisioning or capital cost', 0.05, 0.6),
+    ] },
+    { id: 'sbi', name: 'State Bank of India', industry: 'Banking', sector: 'Public sector bank', margin: 0.50, asOf: '2026-06-30', desc: 'Largest bank; deposit franchise reprices slowly, large government bond holdings.', ch: [
+      C('rate', 'finance', 'Net interest margin', 0.80, 1, 0.55, 1, 0, 0, 1, 'disclosed', 'Interest-rate sensitivity table; 55% of the policy move reaches the book', 6.171, 0.402),
+      C('bank_rates', 'finance', 'Loan repricing', 0.80, 1, 0.80, 1, 0, 0, 1, 'estimated', 'Own lending-rate moves reach the book directly', 1.8, 0.5),
+      C('fed_rate', 'treasury', 'Treasury book (AFS)', 0.15, 1, 0.30, 1, 0, 0, -1, 'estimated', 'Larger bond book marks down when yields rise', 1.4, 0.5),
+      C('credit_growth', 'demand', 'Loan book growth', 0.80, 1, 0.20, 1, 0, 0, 1, 'estimated', 'Earnings scale with the loan book', 1.1, 0.4),
+      C('rbi_norms', 'demand', 'Regulatory cost', 0.80, 1, 0.30, 2, 0, 0, -1, 'estimated', 'Tighter norms raise provisioning or capital cost', 0.06, 0.6),
+    ] },
+    { id: 'axis', name: 'Axis Bank', industry: 'Banking', sector: 'Private sector bank', margin: 0.52, asOf: '2026-06-30', desc: 'Corporate and retail lending; margin follows the policy rate.', ch: [
+      C('rate', 'finance', 'Net interest margin', 0.80, 1, 0.70, 1, 0, 0, 1, 'disclosed', 'Interest-rate sensitivity table; 70% of the policy move reaches the book', 6.465, 0.402),
+      C('bank_rates', 'finance', 'Loan repricing', 0.80, 1, 0.80, 1, 0, 0, 1, 'estimated', 'Own lending-rate moves reach the book directly', 2.0, 0.5),
+      C('fed_rate', 'treasury', 'Treasury book (AFS)', 0.10, 1, 0.30, 1, 0, 0, -1, 'estimated', 'Higher global yields mark the AFS book down', 1.0, 0.5),
+      C('credit_growth', 'demand', 'Loan book growth', 0.80, 1, 0.20, 1, 0, 0, 1, 'estimated', 'Earnings scale with the loan book', 1.2, 0.4),
+      C('rbi_norms', 'demand', 'Regulatory cost', 0.80, 1, 0.30, 2, 0, 0, -1, 'estimated', 'Tighter norms raise provisioning or capital cost', 0.05, 0.6),
+    ] },
+    { id: 'sun', name: 'Sun Pharmaceutical', industry: 'Pharma', sector: 'Drug maker', margin: 0.28, asOf: '2026-06-30', desc: 'Largest drug maker; imports intermediates, sells price-controlled essential drugs, a third of sales in the US.', ch: [
+      C('api', 'cost', 'Imported intermediates', 0.22, 1, 0.30, 1, 0.10, 0, -1, 'estimated', 'Intermediates 22% of revenue', 0.299, 0.312),
+      C('drug_price', 'demand', 'Price-controlled portfolio', 0.25, 1, 0.20, 1, 0, 0, 1, 'estimated', 'Essential drugs about 25% of domestic revenue; mix shift offsets 20%', 0.331, 0.391),
+      C('usfda', 'demand', 'US plant compliance', 0.30, 1, 0.20, 2, 0, 0, -1, 'estimated', 'An import alert on a key plant costs several percent of US sales', 0.25, 0.6),
+      C('us_tariff', 'demand', 'US generics exports', 0.30, 1, 0.30, 2, 0, 0, -1, 'estimated', 'About 30% of sales in the US; generics partly exempt', 0.15, 0.5),
+      C('rupee', 'revenue', 'Export revenue', 0.60, 1, 1.0, 1, 0.40, 0, -1, 'estimated', '60% of revenue in foreign currency; 40% hedged'),
+      C('rate', 'finance', 'Floating-rate debt', 0.05, 1, 0.20, 1, 0, 0, -1, 'estimated', 'Net debt small relative to EBITDA', 1.732, 0.683),
+    ] },
+    { id: 'divis', name: "Divi's Laboratories", industry: 'Pharma', sector: 'API and intermediate maker', margin: 0.33, asOf: '2026-06-30', desc: 'Makes active ingredients in India; gains when imported supply is restricted; exports most output.', ch: [
+      C('api', 'revenue', 'Domestic intermediate sales', 0.60, 1, 0.75, 1, 0, 0, 1, 'estimated', 'Domestic API pricing follows import parity', 0.377, 0.312),
+      C('rupee', 'revenue', 'Export revenue', 0.85, 1, 1.0, 1, 0.30, 0, -1, 'estimated', '85% of revenue in foreign currency; 30% hedged'),
+      C('us_tariff', 'demand', 'US exports', 0.40, 1, 0.30, 2, 0, 0, -1, 'estimated', 'APIs largely exempt but customers are exposed', 0.1, 0.5),
+      C('usfda', 'demand', 'US plant compliance', 0.40, 1, 0.20, 2, 0, 0, -1, 'estimated', 'Plant inspections gate US supply', 0.2, 0.6),
+    ] },
+    { id: 'cipla', name: 'Cipla', industry: 'Pharma', sector: 'Drug maker', margin: 0.25, asOf: '2026-06-30', desc: 'Strong domestic franchise with a large price-controlled respiratory portfolio; a quarter of sales in the US.', ch: [
+      C('api', 'cost', 'Imported intermediates', 0.25, 1, 0.30, 1, 0.05, 0, -1, 'estimated', 'Intermediates 25% of revenue'),
+      C('drug_price', 'demand', 'Price-controlled portfolio', 0.40, 1, 0.20, 1, 0, 0, 1, 'estimated', 'Larger domestic share than peers', 0.4, 0.4),
+      C('usfda', 'demand', 'US plant compliance', 0.25, 1, 0.20, 2, 0, 0, -1, 'estimated', 'Goa and Indore plants under inspection cycles', 0.2, 0.6),
+      C('us_tariff', 'demand', 'US generics exports', 0.25, 1, 0.30, 2, 0, 0, -1, 'estimated', 'About a quarter of sales in the US', 0.1, 0.5),
+      C('rupee', 'revenue', 'Export revenue', 0.45, 1, 1.0, 1, 0.30, 0, -1, 'estimated', '45% of revenue in foreign currency; 30% hedged'),
+    ] },
+    { id: 'drreddy', name: "Dr Reddy's", industry: 'Pharma', sector: 'Drug maker', margin: 0.26, asOf: '2026-06-30', desc: 'Nearly half of sales in the US; exposed to FDA actions and US trade policy.', ch: [
+      C('api', 'cost', 'Imported intermediates', 0.20, 1, 0.30, 1, 0.05, 0, -1, 'estimated', 'Intermediates 20% of revenue'),
+      C('drug_price', 'demand', 'Price-controlled portfolio', 0.20, 1, 0.20, 1, 0, 0, 1, 'estimated', 'Smaller domestic share', 0.2, 0.4),
+      C('usfda', 'demand', 'US plant compliance', 0.45, 1, 0.20, 2, 0, 0, -1, 'estimated', 'US is the largest market; plant actions bite', 0.3, 0.6),
+      C('us_tariff', 'demand', 'US generics exports', 0.45, 1, 0.30, 2, 0, 0, -1, 'estimated', 'Nearly half of sales in the US', 0.25, 0.5),
+      C('rupee', 'revenue', 'Export revenue', 0.55, 1, 1.0, 1, 0.40, 0, -1, 'estimated', '55% of revenue in foreign currency; 40% hedged'),
+    ] },
+    { id: 'tcs', name: 'TCS', industry: 'Technology', sector: 'IT services', margin: 0.26, asOf: '2026-06-30', desc: 'Largest IT services exporter; revenue follows enterprise technology budgets and the dollar.', ch: [
+      C('it_demand', 'demand', 'Enterprise services demand', 0.95, 1, 0.10, 2, 0, 0, 1, 'estimated', 'Revenue elasticity to client budgets about 0.4 with a two-quarter lag', 0.3, 0.33),
+      C('visa', 'demand', 'US onsite delivery', 0.50, 1, 0.30, 2, 0, 0, -1, 'estimated', 'Visa costs and limits raise onsite cost; offshore shift offsets 30%', 0.1, 0.5),
+      C('rupee', 'revenue', 'Dollar and euro revenue', 0.90, 1, 1.0, 1, 0.50, 0, -1, 'estimated', '90% of revenue in foreign currency; about half hedged'),
+      C('fed_rate', 'demand', 'US client spending', 0.55, 1, 0.20, 2, 0, 0, -1, 'estimated', 'Higher US rates slow discretionary tech spending', 0.3, 0.6),
+    ] },
+    { id: 'infosys', name: 'Infosys', industry: 'Technology', sector: 'IT services', margin: 0.24, asOf: '2026-06-30', desc: 'Second-largest IT exporter; large financial-services client base in the US and Europe.', ch: [
+      C('it_demand', 'demand', 'Enterprise services demand', 0.95, 1, 0.10, 2, 0, 0, 1, 'estimated', 'Revenue elasticity to client budgets about 0.4', 0.3, 0.33),
+      C('visa', 'demand', 'US onsite delivery', 0.55, 1, 0.30, 2, 0, 0, -1, 'estimated', 'Higher onsite mix than peers', 0.12, 0.5),
+      C('rupee', 'revenue', 'Dollar and euro revenue', 0.95, 1, 1.0, 1, 0.50, 0, -1, 'estimated', '95% of revenue in foreign currency; about half hedged'),
+      C('fed_rate', 'demand', 'US client spending', 0.60, 1, 0.20, 2, 0, 0, -1, 'estimated', 'Higher US rates slow discretionary tech spending', 0.3, 0.6),
+    ] },
+    { id: 'wipro', name: 'Wipro', industry: 'Technology', sector: 'IT services', margin: 0.20, asOf: '2026-06-30', desc: 'IT services exporter with a thinner margin; more sensitive to demand and visa costs.', ch: [
+      C('it_demand', 'demand', 'Enterprise services demand', 0.95, 1, 0.10, 2, 0, 0, 1, 'estimated', 'Thinner margin amplifies the percentage effect', 0.4, 0.33),
+      C('visa', 'demand', 'US onsite delivery', 0.55, 1, 0.30, 2, 0, 0, -1, 'estimated', 'Visa costs weigh more on a thin margin', 0.14, 0.5),
+      C('rupee', 'revenue', 'Dollar and euro revenue', 0.95, 1, 1.0, 1, 0.50, 0, -1, 'estimated', '95% of revenue in foreign currency; about half hedged'),
+      C('fed_rate', 'demand', 'US client spending', 0.60, 1, 0.20, 2, 0, 0, -1, 'estimated', 'Higher US rates slow discretionary tech spending', 0.35, 0.6),
+    ] },
+    { id: 'hcl', name: 'HCLTech', industry: 'Technology', sector: 'IT services', margin: 0.22, asOf: '2026-06-30', desc: 'IT and engineering services exporter with a large software products business.', ch: [
+      C('it_demand', 'demand', 'Enterprise services demand', 0.95, 1, 0.10, 2, 0, 0, 1, 'estimated', 'Revenue elasticity to client budgets about 0.4', 0.33, 0.33),
+      C('visa', 'demand', 'US onsite delivery', 0.50, 1, 0.30, 2, 0, 0, -1, 'estimated', 'Visa costs and limits raise onsite cost', 0.1, 0.5),
+      C('rupee', 'revenue', 'Dollar and euro revenue', 0.95, 1, 1.0, 1, 0.50, 0, -1, 'estimated', '95% of revenue in foreign currency; about half hedged'),
+      C('fed_rate', 'demand', 'US client spending', 0.60, 1, 0.20, 2, 0, 0, -1, 'estimated', 'Higher US rates slow discretionary tech spending', 0.3, 0.6),
+    ] },
+  ];
+  const r3 = x => Math.round(x * 1000) / 1000;
+  const COMPANIES = RAW.map(c => ({ id: c.id, name: c.name, industry: c.industry, sector: c.sector, margin: c.margin, asOf: c.asOf, desc: c.desc, channels: c.ch.map(h => ({ variable: h.variable, kind: h.kind, name: h.name, share: h.share, beta: h.beta != null ? h.beta : r3(h.share * h.sens / c.margin), sigmaC: h.sigmaC != null ? h.sigmaC : (h.source === 'disclosed' ? 0.25 : 0.35), passThrough: h.passThrough, lagQ: h.lagQ, hedge: h.hedge, substitution: h.substitution, signUp: h.signUp, policyRisk: h.policyRisk, source: h.source, basis: h.basis })) }));
+  const companyById = id => COMPANIES.find(c => c.id === id);
+  const fmtMag = (v, unit) => unit === 'bps' ? Math.round(v) + ' bps' : unit === 'pts' ? (Math.round(v * 10) / 10) + ' pts' : (Math.round(v * 10) / 10) + '%';
+  function titleOf(e) {
+    const V = VARS[e.var]; const up = e.dir > 0; const phrase = V.phrase[up ? 0 : 1];
+    const mag = e.extracted ? ' ' + fmtMag(e.mag, e.unit) : '';
+    const topic = e.topic && !['relief', ''].includes(e.topic) ? ', ' + e.topic : '';
+    const suffix = e.nFacts === 0 ? ' (expected)' : '';
+    if (e.var === 'geo_risk') return 'Geopolitical risk' + topic + ': ' + phrase + suffix;
+    if (e.var === 'freight') return 'Shipping routes' + topic + ': ' + phrase + suffix;
+    return V.label + ' ' + phrase + mag + suffix;
+  }
+  function tokenOf(e) {
+    const V = VARS[e.var]; const facts = e.reports.filter(r => !r.outlook).length;
+    const sigmaE = e.extracted ? V.sigmaE : Math.min(0.8, V.sigmaE + 0.25);
+    return { id: e.id, title: titleOf(e), keys: [], tags: e.cats, date: e.last.slice(0, 10), horizonQ: V.horizonQ, horizonText: V.horizonText,
+      variable: { name: e.var, label: V.label, unit: V.unit, magnitude: e.dir * e.mag }, sigmaE, hit: V.hit, precedents: [],
+      sources: e.reports.map(r => ({ src: 'Jagran business desk, ' + r.type + ', ' + r.date.slice(0, 10), cred: r.outlook ? 0.6 : 0.85, type: r.outlook ? 'PREDICTION' : 'FACT', claim: 'event', text: r.headline })), facts };
+  }
+  const exposedCompanies = e => COMPANIES.filter(c => c.channels.some(h => h.variable === e.var));
+  return { INDUSTRIES, CATEGORIES, VARS, COMPANIES, companyById, titleOf, tokenOf, exposedCompanies, fmtMag };
+});
+
+</script>
+<script src="../shared/orbit-api.js"></script>
+<script>
+// The feed comes from the database through /api/data (bundled snapshot if the server is down).
+OrbitAPI.ready(function () {
+const DATA = window.ORBIT_DATA;
+(function () {
+  const Q = window.OrbitQuant, M = window.OrbitMVP; const $ = s => document.querySelector(s);
+  const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const CATS = M.CATEGORIES, INDS = M.INDUSTRIES; const CCOL = { 'Supply disruption': 'var(--c1)', 'Commodity shock': 'var(--c2)', 'Regulation': 'var(--c3)', 'Trade restriction': 'var(--c4)', 'Interest-rate change': 'var(--c5)', 'Geopolitical event': 'var(--c6)', 'Demand shock': 'var(--c7)' };
+  const fmt = x => (x > 0 ? '+' : x < 0 ? '−' : '') + Math.abs(x).toFixed(1) + '%'; const pct = x => Math.round(x * 100) + '%';
+  const sgn = x => x < 0 ? 'neg' : x > 0 ? 'pos' : ''; const confColor = c => c >= 0.8 ? 'var(--good)' : c >= 0.65 ? 'var(--warn)' : 'var(--crit)';
+  const d2 = s => { const m = String(s).match(/^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{1,2}):(\d{2})(?::(\d{2}))?)?/); return m ? new Date(+m[1], +m[2] - 1, +m[3], +(m[4] || 0), +(m[5] || 0), +(m[6] || 0)) : new Date(NaN); }; const fmtD = d => d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }); const fmtDs = d => d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+  const E = DATA.events.map(e => ({ ...e, title: M.titleOf(e), firstD: d2(e.first), lastD: d2(e.last), primary: e.cats[0] })); const META = DATA.meta; const END = d2(META.last), START = d2(META.first);
+  const T = { view: 'overview', window: 'all', inds: new Set(), cats: new Set(), q: '', sel: null, co: 'maruti', cache: new Map() };
+  const windowStart = () => T.window === 'all' ? START : new Date(END.getTime() - Number(T.window) * 86400000);
+  const inWindow = e => e.lastD >= windowStart();
+  const filtered = () => E.filter(e => inWindow(e) && (!T.inds.size || e.inds.some(i => T.inds.has(i))) && (!T.cats.size || e.cats.some(c => T.cats.has(c))) && (!T.q || (e.title + ' ' + e.rep + ' ' + e.reports.map(r => r.headline).join(' ')).toLowerCase().includes(T.q.toLowerCase())));
+  function assess(e, co, draws) { const k = e.id + '|' + co.id + '|' + draws; if (!T.cache.has(k)) T.cache.set(k, Q.assess(M.tokenOf(e), co, { draws })); return T.cache.get(k); }
+  function exposures(e, draws) { return M.exposedCompanies(e).map(co => assess(e, co, draws || 2000)).filter(r => r.exposed).sort((a, b) => Math.abs(b.dist.median) - Math.abs(a.dist.median)); }
+  const VRANK = { Act: 3, Prepare: 2, Monitor: 1, Ignore: 0 };
+  function summary(e) { const xs = exposures(e); const top = xs[0] || null; const verdict = xs.reduce((a, r) => VRANK[r.decision.verdict] > VRANK[a] ? r.decision.verdict : a, 'Monitor'); return { xs, top, verdict, nAct: xs.filter(r => r.decision.verdict === 'Act').length, nHigh: xs.filter(r => r.materiality.tier === 'high').length }; }
+  function meter(c) { const v = Math.round(c * 100); return `<div class="meter" role="img" aria-label="Confidence ${v} of 100"><div class="fill" style="width:${v}%;background:${confColor(c)}"></div><i style="left:65%"></i><i style="left:80%"></i></div>`; }
+  const evidence = e => `${e.count} report${e.count === 1 ? '' : 's'} · ${e.nFacts} reported, ${e.count - e.nFacts} expected · ${e.index ? 'intensity index set by the event type' : 'move ' + (e.extracted ? 'extracted from ' + e.nExtracted + ' report' + (e.nExtracted === 1 ? '' : 's') : 'assumed, none stated in the reports')}`;
+  const moveText = e => `${M.VARS[e.var].label} ${e.dir > 0 ? '+' : '−'}${M.fmtMag(e.mag, e.unit)}${e.level ? ' (' + e.level + ')' : ''}`;
+
+  // ------------------------------------------------------------------ chrome
+  function chrome() {
+    $('#nav').innerHTML = [['overview', 'Overview'], ['events', 'Events'], ['companies', 'Companies'], ['engine', 'Engine']].map(([id, l]) => `<button type="button" class="${T.view === id ? 'active' : ''}" data-view="${id}">${l}</button>`).join('');
+    $('#coverage').innerHTML = `<b>${META.reports.toLocaleString('en-IN')}</b> reports, Jagran business desk, ${fmtD(START)} to ${fmtD(END)}<br>${META.classified} reports classified into <b>${E.length}</b> events · latest report ${fmtD(END)} ${END.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`;
+  }
+  function filterBar(showWindow) {
+    return `<div class="panel"><div class="filters">${showWindow ? `<select id="win" aria-label="Time window"><option value="all" ${T.window === 'all' ? 'selected' : ''}>Whole period</option><option value="180" ${T.window === '180' ? 'selected' : ''}>Last 180 days</option><option value="90" ${T.window === '90' ? 'selected' : ''}>Last 90 days</option><option value="30" ${T.window === '30' ? 'selected' : ''}>Last 30 days</option><option value="7" ${T.window === '7' ? 'selected' : ''}>Last 7 days</option></select>` : ''}
+    ${INDS.map(i => `<button type="button" class="chip ${T.inds.has(i) ? 'on' : ''}" data-ind="${i}">${i}</button>`).join('')}<span class="dim">·</span>${CATS.map(c => `<button type="button" class="chip ${T.cats.has(c) ? 'on' : ''}" data-cat="${c}"><i style="background:${CCOL[c]}"></i>${c}</button>`).join('')}
+    <input id="q" type="search" placeholder="Search events and reports" value="${esc(T.q)}" aria-label="Search" style="flex:1 1 200px;max-width:320px"></div></div>`;
+  }
+
+  // ------------------------------------------------------------------ overview
+  function heatmap(list) {
+    const counts = {}; let max = 1; CATS.forEach(c => INDS.forEach(i => { const n = list.filter(e => e.cats.includes(c) && e.inds.includes(i)).length; counts[c + '|' + i] = n; if (n > max) max = n; }));
+    return `<div style="overflow-x:auto"><div class="heat" style="grid-template-columns: 150px repeat(${INDS.length}, minmax(76px, 1fr)); min-width: ${150 + INDS.length * 80}px"><div></div>${INDS.map(i => `<div class="hd">${i}</div>`).join('')}${CATS.map(c => `<div class="rh"><span class="dot" style="background:${CCOL[c]};margin-right:6px"></span>${c}</div>` + INDS.map(i => { const n = counts[c + '|' + i]; const a = n ? 0.12 + 0.75 * n / max : 0.04; return `<div class="cell" style="background:rgba(var(--seq),${a.toFixed(2)});color:${a > 0.55 ? '#fff' : 'var(--fg)'}" title="${c} in ${i}: ${n} events" data-cat="${c}" data-ind="${i}">${n || ''}</div>`; }).join('')).join('')}</div></div>`;
+  }
+  function timeline(list) {
+    const weeks = []; const w0 = new Date(START); w0.setHours(0, 0, 0, 0); w0.setDate(w0.getDate() - w0.getDay());
+    for (let d = new Date(w0); d <= END; d.setDate(d.getDate() + 7)) weeks.push(new Date(d));
+    const idx = d => Math.min(weeks.length - 1, Math.floor((d - w0) / (7 * 86400000)));
+    const stacks = weeks.map(() => Object.fromEntries(CATS.map(c => [c, 0]))); list.forEach(e => { stacks[idx(e.firstD)][e.primary]++; });
+    const totals = stacks.map(s => CATS.reduce((a, c) => a + s[c], 0)); const maxT = Math.max(1, ...totals);
+    const W = 1000, H = 190, pl = 28, pb = 26, pt = 8; const bw = (W - pl - 8) / weeks.length; const y = v => pt + (H - pt - pb) * (1 - v / maxT);
+    let bars = ''; stacks.forEach((s, k) => { let acc = 0; CATS.forEach(c => { const v = s[c]; if (!v) return; const y1 = y(acc + v), y0 = y(acc); bars += `<rect x="${(pl + k * bw + 1).toFixed(1)}" y="${y1.toFixed(1)}" width="${Math.max(1, bw - 2).toFixed(1)}" height="${Math.max(0, y0 - y1 - 1).toFixed(1)}" rx="1.5" fill="${CCOL[c]}" data-w="${k}"></rect>`; acc += v; }); });
+    const ticks = []; weeks.forEach((d, k) => { if (d.getDate() <= 7) ticks.push(`<text x="${(pl + k * bw).toFixed(1)}" y="${H - 8}">${d.toLocaleDateString('en-GB', { month: 'short' })}${d.getMonth() === 0 ? ' ' + d.getFullYear() : ''}</text>`); });
+    const grid = [0, Math.ceil(maxT / 2), maxT].map(v => `<line x1="${pl}" x2="${W - 8}" y1="${y(v).toFixed(1)}" y2="${y(v).toFixed(1)}" stroke="var(--line)" stroke-width="1"></line><text x="${pl - 6}" y="${(y(v) + 3.5).toFixed(1)}" text-anchor="end">${v}</text>`).join('');
+    const hit = weeks.map((d, k) => `<rect class="hit" x="${(pl + k * bw).toFixed(1)}" y="0" width="${bw.toFixed(1)}" height="${H}" fill="transparent" data-w="${k}"></rect>`).join('');
+    T._weeks = weeks; T._stacks = stacks;
+    return `<svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" role="img" aria-label="Events per week by category" id="tl" style="max-width:100%;height:auto">${grid}${bars}${ticks.join('')}${hit}</svg><div class="legend">${CATS.map(c => `<span><span class="dot" style="background:${CCOL[c]}"></span>${c}</span>`).join('')}</div>`;
+  }
+  function overview() {
+    const list = filtered(); const last30 = E.filter(e => e.lastD >= new Date(END.getTime() - 30 * 86400000));
+    const act = last30.map(e => ({ e, s: summary(e) })).filter(x => x.s.verdict === 'Act').sort((a, b) => b.e.lastD - a.e.lastD);
+    const tiles = [['Events tracked', list.length, `${CATS.length} categories across ${INDS.length} industries`], ['Reports behind them', new Set(list.flatMap(e => e.reports.map(r => r.sl))).size, `of ${META.reports.toLocaleString('en-IN')} on the desk`], ['Active in the last 30 days', last30.length, `latest ${fmtD(END)}`], ['Needing action now', act.length, 'events where a company verdict is Act'], ['Companies covered', M.COMPANIES.length, INDS.filter(i => M.COMPANIES.some(c => c.industry === i)).map(i => M.COMPANIES.filter(c => c.industry === i).length + ' ' + i.toLowerCase()).join(', ') + ' (other sectors are modelled on the owner page)']];
+    const attention = act.slice(0, 8).map(({ e, s }) => `<button type="button" class="ev" data-open="${e.id}"><span class="stripe" style="background:${CCOL[e.primary]}"></span><span><span class="t">${esc(e.title)}</span><span class="m">${esc(s.top.co.name)} ${s.top.direction} ${fmt(s.top.band.lo)} to ${fmt(s.top.band.hi)} · ${s.nAct} compan${s.nAct === 1 ? 'y' : 'ies'} to act · ${e.count} report${e.count === 1 ? '' : 's'}</span></span><span class="r">${fmtDs(e.lastD)}</span></button>`).join('') || '<div class="empty">Nothing needs action in the last 30 days.</div>';
+    return filterBar(true) + `<div class="grid cols-5">${tiles.map(t => `<div class="panel stat"><div class="l">${t[0]}</div><div class="v">${typeof t[1] === 'number' ? t[1].toLocaleString('en-IN') : t[1]}</div><div class="s">${t[2]}</div></div>`).join('')}</div>
+    <div class="grid cols-2"><div class="panel"><h2>Events by category and industry</h2><p class="panel-desc">Counts in the selected window. An event can carry more than one category or industry.</p><div style="margin-top:12px;overflow-x:auto">${heatmap(list)}</div></div>
+    <div class="panel"><h2>Events per week</h2><p class="panel-desc">Each event counted once, in the week of its first report, by its primary category.</p><div style="margin-top:12px">${timeline(list)}</div></div></div>
+    <div class="panel"><div class="row between wrapf"><div><h2>Needing action in the last 30 days</h2><p class="panel-desc">Events where the engine's verdict for at least one company is Act: material, confident and within two quarters.</p></div><button type="button" class="chip" data-view="events">All events</button></div><div class="ev-list" style="margin-top:8px;max-height:none">${attention}</div></div>`;
+  }
+
+  // ------------------------------------------------------------------ events
+  function evRow(e) { const s = summary(e); return `<button type="button" class="ev ${T.sel === e.id ? 'sel' : ''}" data-sel="${e.id}"><span class="stripe" style="background:${CCOL[e.primary]}"></span><span><span class="t">${esc(e.title)}</span><span class="m">${e.inds.join(', ')} · ${e.count} report${e.count === 1 ? '' : 's'}${e.extracted || e.index ? '' : ' · move assumed'}</span><span class="badges">${e.cats.map(c => `<span class="pill plain"><span class="dot" style="background:${CCOL[c]};width:7px;height:7px;margin-right:4px"></span>${c}</span>`).join('')}${s.top ? `<span class="pill ${s.verdict}">${s.verdict}</span>` : '<span class="pill plain">Watch</span>'}</span></span><span class="r">${fmtDs(e.firstD)}${e.firstD.toDateString() === e.lastD.toDateString() ? '' : ' to ' + fmtDs(e.lastD)}</span></button>`; }
+  function companyRow(r) { return `<tr class="click" data-co="${r.co.id}"><td><b>${esc(r.co.name)}</b><br><span class="dim">${esc(r.co.industry)} · ${esc(r.primary.name)}</span></td><td><span class="pill ${r.direction}">${r.direction}</span></td><td><span class="pill ${r.materiality.tier}">${r.materiality.tier}</span></td><td class="n ${sgn(r.band.lo)}">${fmt(r.band.lo)} to ${fmt(r.band.hi)}</td><td class="n">${Math.round(r.confidence.calibrated * 100)}</td><td><span class="pill ${r.decision.verdict}">${r.decision.verdict}</span></td></tr>`; }
+  function companyDetail(r) {
+    const scen = r.scenarios.list.map((s, i) => `<div class="scen"><span>${s.name}</span><div class="pb"><div style="width:${Math.round(s.p * 100)}%;background:${i === 0 ? 'var(--accent)' : i === 1 ? 'var(--good)' : 'var(--crit)'}"></div></div><span class="pct">${pct(s.p)}</span><span class="rng ${sgn(s.lo)}">${fmt(s.lo)} to ${fmt(s.hi)}</span></div>`).join('');
+    const chans = r.channels.map(ch => `<div class="flow"><span>${esc(ch.move.label)} ${ch.move.magnitude > 0 ? '+' : ''}${M.fmtMag(Math.abs(ch.move.magnitude), ch.move.unit).replace(/^/, ch.move.magnitude < 0 ? '−' : '')}</span><i>→</i><span>${esc(ch.name)} (${ch.kind})</span><i>→</i><span>pass-through ${pct(ch.passThrough)}, hedge ${pct(ch.hedge)}</span><i>→</i><span class="${sgn(ch.median)}">EBITDA ${fmt(ch.median)}</span></div>`).join('');
+    const levers = r.levers.length ? `<table class="tbl"><tr><th>Lever</th><th class="n">Benefit</th><th class="n">Cost</th><th class="n">Net</th></tr>${r.levers.map(l => `<tr><td>${esc(l.label)}<br><span class="dim">${esc(l.how)}</span></td><td class="n ${sgn(l.benefit)}">${fmt(l.benefit)}</td><td class="n">${l.cost ? '−' + Math.abs(l.cost).toFixed(2) + '%' : '0'}</td><td class="n ${sgn(l.net)}">${fmt(l.net)}</td></tr>`).join('')}</table>` : '<p class="dim">No lever applies to this channel.</p>';
+    return `<div class="panel" style="margin-top:10px;background:var(--surface-2)"><div class="row between wrapf"><h3 style="font-size:14px">${esc(r.co.name)}: ${esc(r.co.sector)}</h3><span class="pill ${r.decision.verdict}">${r.decision.verdict}</span></div>
+      <div class="mrow" style="margin-top:8px">${meter(r.confidence.calibrated)}<span>Direction confidence <b>${Math.round(r.confidence.calibrated * 100)}/100</b> <span class="dim">calibrated · size reliability ${r.confidence.sizeGrade}</span></span></div>
+      <dl class="kv" style="margin-top:8px"><dt>Base case</dt><dd class="mono ${sgn(r.band.lo)}">${fmt(r.band.lo)} to ${fmt(r.band.hi)} of EBITDA, ${pct(r.band.pBase)} likely, ${esc(r.ev.horizonText)}</dd><dt>Probability-weighted</dt><dd class="mono">${fmt(r.expected)}</dd><dt>Materiality</dt><dd>${r.materiality.tier}: P(|impact| ≥ 1%) = ${pct(r.materiality.pGe1)}</dd><dt>Elasticity</dt><dd>${r.primary.beta} per ${r.primary.move.unit === 'bps' ? '100 bps' : '1 ' + r.primary.move.unit} ± ${Math.round(r.primary.sigmaC * 100)}% <span class="dim">(${esc(r.primary.source)}: ${esc(r.primary.basis)})</span></dd></dl>
+      <h3 style="font-size:13px;margin-top:10px">Transmission</h3>${chans}<h3 style="font-size:13px;margin-top:10px">Scenarios</h3>${scen}<h3 style="font-size:13px;margin-top:10px">Levers, priced in EBITDA</h3>${levers}<p class="note" style="margin-top:8px"><b>${r.decision.verdict}.</b> ${esc(r.decision.reason)}</p>
+      <details><summary>How the engine got here</summary><ol class="steps">${r.trace.map(t => `<li><b>${esc(t.step)}.</b> ${esc(t.text)}</li>`).join('')}</ol></details></div>`;
+  }
+  function detail(e) {
+    if (!e) return '<div class="panel"><div class="empty">Select an event.</div></div>';
+    const xs = exposures(e, 8000); const tok = M.tokenOf(e); const ver = Q.verify(tok);
+    const reps = e.reports.slice().reverse().map(r => `<div class="rep"><span class="d">${fmtD(d2(r.date))}<br>${esc(r.type)}</span><span>${esc(r.headline)}<small>${r.mt ? 'Machine-translated · ' : ''}${r.outlook ? 'Expectation' : 'Reported'}${r.mag != null ? ' · states ' + M.fmtMag(r.mag, e.unit) : ''}${r.level ? ' · ' + esc(r.level) : ''}</small></span></div>`).join('');
+    const open = T.coOpen && xs.find(r => r.co.id === T.coOpen);
+    return `<div class="panel"><div class="tags">${CATS.map(c => `<span class="tag ${e.cats.includes(c) ? 'on' : ''}">${e.cats.includes(c) ? `<span class="dot" style="background:${CCOL[c]};margin-right:5px;width:7px;height:7px"></span>` : ''}${c}</span>`).join('')}</div>
+      <h2 style="font-size:19px;margin-top:10px">${esc(e.title)}</h2><p class="muted" style="margin-top:4px">${esc(e.rep)}</p>
+      <dl class="kv" style="margin-top:12px"><dt>When</dt><dd>${fmtD(e.firstD)}${e.firstD.toDateString() === e.lastD.toDateString() ? '' : ' to ' + fmtD(e.lastD)}</dd><dt>Move</dt><dd>${esc(moveText(e))}${e.extracted || e.index ? '' : ' <span class="dim">(assumed from the event type; no figure stated in the reports)</span>'}</dd><dt>Industries</dt><dd>${e.inds.join(', ')}</dd><dt>Evidence</dt><dd>${esc(evidence(e))}</dd></dl>
+      <div class="mrow" style="margin-top:10px">${meter(ver.sourceConfidence)}<span>Source confidence <b>${Math.round(ver.sourceConfidence * 100)}/100</b> <span class="dim">${ver.facts} corroborating report${ver.facts === 1 ? '' : 's'}</span></span></div></div>
+      <div class="panel"><h2>Companies affected</h2><p class="panel-desc">Base-case EBITDA band from the quant engine; select a company for the transmission, scenarios and levers.</p>${xs.length ? `<div style="overflow-x:auto;margin-top:8px"><table class="tbl"><tr><th>Company</th><th>Direction</th><th>Materiality</th><th class="n">Base case</th><th class="n">Confidence</th><th>Verdict</th></tr>${xs.map(companyRow).join('')}</table></div>` : '<p class="dim" style="margin-top:8px">No company record has a line that moves with this event. It stays on watch; owners in the affected sectors see it modelled on their own profile.</p>'}${open ? companyDetail(open) : ''}</div>
+      <div class="panel"><h2>Reports</h2><p class="panel-desc">Every report behind this event, latest first.</p><div class="reports" style="margin-top:8px">${reps}</div></div>`;
+  }
+  function events() {
+    const list = filtered().sort((a, b) => b.lastD - a.lastD); if (!T.sel || !list.some(e => e.id === T.sel)) T.sel = list.length ? list[0].id : null;
+    return filterBar(true) + `<div class="grid md"><div class="panel" style="padding:8px"><div class="dim" style="padding:6px 8px">${list.length} event${list.length === 1 ? '' : 's'}, latest first</div><div class="ev-list" id="evlist">${list.map(evRow).join('') || '<div class="empty">No events match.</div>'}</div></div><div id="detail" style="display:flex;flex-direction:column;gap:14px;min-width:0">${detail(E.find(e => e.id === T.sel))}</div></div>`;
+  }
+
+  // ------------------------------------------------------------------ companies
+  function companies() {
+    const co = M.companyById(T.co); const list = filtered().sort((a, b) => b.lastD - a.lastD);
+    const rows = list.filter(e => co.channels.some(h => h.variable === e.var)).map(e => ({ e, r: assess(e, co, 3000) })).filter(x => x.r.exposed);
+    const grid = `<div class="co-grid">${M.COMPANIES.map(c => `<button type="button" class="co ${c.id === T.co ? 'on' : ''}" data-pick="${c.id}"><b>${esc(c.name)}</b><span>${esc(c.industry)} · ${esc(c.sector)}</span></button>`).join('')}</div>`;
+    const chans = `<table class="tbl"><tr><th>Line</th><th>Moves with</th><th class="n">Share</th><th class="n">Pass-through</th><th class="n">Hedge</th><th>Basis</th></tr>${co.channels.map(h => `<tr><td>${esc(h.name)}</td><td>${esc(M.VARS[h.variable].label)}</td><td class="n">${pct(h.share)}</td><td class="n">${pct(h.passThrough)}</td><td class="n">${pct(h.hedge)}</td><td class="dim">${esc(h.basis)}</td></tr>`).join('')}</table>`;
+    const tbl = rows.length ? `<table class="tbl"><tr><th>Event</th><th>When</th><th>Direction</th><th>Materiality</th><th class="n">Base case</th><th class="n">Confidence</th><th>Verdict</th></tr>${rows.map(({ e, r }) => `<tr class="click" data-open="${e.id}"><td><b>${esc(e.title)}</b><br><span class="dim">${e.count} report${e.count === 1 ? '' : 's'}</span></td><td class="mono" style="white-space:nowrap">${fmtDs(e.lastD)}</td><td><span class="pill ${r.direction}">${r.direction}</span></td><td><span class="pill ${r.materiality.tier}">${r.materiality.tier}</span></td><td class="n ${sgn(r.band.lo)}">${fmt(r.band.lo)} to ${fmt(r.band.hi)}</td><td class="n">${Math.round(r.confidence.calibrated * 100)}</td><td><span class="pill ${r.decision.verdict}">${r.decision.verdict}</span></td></tr>`).join('')}</table>` : '<div class="empty">No event in this window touches this company.</div>';
+    const nAct = rows.filter(x => x.r.decision.verdict === 'Act').length, nAdv = rows.filter(x => x.r.direction === 'adverse').length;
+    return filterBar(true) + `<div class="panel"><h2>Company</h2><p class="panel-desc">Choose a company to see every event that reaches one of its lines.</p><div style="margin-top:10px">${grid}</div></div>
+      <div class="panel"><div class="row between wrapf"><div><h2>${esc(co.name)}</h2><p class="panel-desc">${esc(co.desc)} Record as of ${esc(co.asOf)}, EBITDA margin ${pct(co.margin)}.</p></div><div class="row"><span class="pill plain">${rows.length} events</span><span class="pill adverse">${nAdv} adverse</span><span class="pill supportive">${rows.length - nAdv} supportive</span><span class="pill Act">${nAct} to act</span></div></div><div style="overflow-x:auto;margin-top:10px">${tbl}</div></div>
+      <div class="panel"><h2>What moves ${esc(co.name)}</h2><p class="panel-desc">The lines in the company record and the variable each one follows.</p><div style="overflow-x:auto;margin-top:8px">${chans}</div></div>`;
+  }
+
+  // ------------------------------------------------------------------ engine
+  function engine() {
+    const ev = Q.evaluate(); const props = Q.propertyTests();
+    const stats = [['Ledger calls', ev.n], ['Direction hit rate', pct(ev.hitRate)], ['Brier, raw → calibrated', `${ev.brierRaw} → ${ev.brierCal}`], ['ECE, raw → calibrated', `${ev.eceRaw} → ${ev.eceCal}`], ['Size within 0.5x to 2x', pct(ev.sizeWithin2x)]];
+    const rel = `<div class="rel">${ev.bins.map(b => `<div class="bar" title="${b.lo}-${b.hi}: n=${b.n}, confidence ${b.conf ?? '-'}, hit ${b.hit ?? '-'}"><div style="height:${b.hit != null ? Math.round(b.hit * 100) : 0}%"></div>${b.conf != null ? `<i style="bottom:${Math.round(b.conf * 100)}%"></i>` : ''}</div>`).join('')}</div><div class="rel-x">${ev.bins.map(b => `<span>${b.lo.toFixed(1)}</span>`).join('')}</div>`;
+    const method = ['Reports are classified by a weighted lexicon into the seven categories and fifteen sectors; a report must describe a change, not a topic.', 'Reports on the same variable, sub-topic and direction with no gap longer than four days form one event; the count of reports is the corroboration signal.', 'The move is extracted from the text (percent, basis points, rupees per litre, paise); when no figure is stated, the event type’s typical move is used and the dispersion widened, and the dashboard says so.', 'Each company record lists the lines that move with a variable: share of revenue, elasticity with its uncertainty, pass-through, reset lag, hedge, substitution and the basis for each number.', 'The engine draws the shock and the elasticity as lognormals, runs 8000 antithetic Monte Carlo draws through the transmission, and reports the central band as the base case with upside and downside tails.', 'Materiality is the probability that the EBITDA effect clears 1% (high) or 0.4% (medium).', 'Direction confidence combines source verification, precedent hit rate, sign agreement, record quality and magnitude clarity, then passes through logistic calibration fitted on the backtest ledger. Size reliability is graded separately.', 'Levers re-run the simulation with one change each and are priced against their cost; the verdict is Act, Prepare, Monitor or Ignore.'];
+    return `<div class="grid cols-5">${stats.map(s => `<div class="panel stat"><div class="l">${s[0]}</div><div class="v" style="font-size:20px">${esc(String(s[1]))}</div></div>`).join('')}</div>
+      <div class="grid cols-2"><div class="panel"><h2>Reliability diagram</h2><p class="panel-desc">Bar: realised direction hit rate per raw-score bin. Line: mean stated confidence. Bars below the line are overconfident bins; calibration corrects them.</p>${rel}<p class="note" style="margin-top:8px">${esc(ev.note)}</p></div>
+      <div class="panel"><h2>Invariants</h2><p class="panel-desc">Checks the engine runs on itself at load.</p><table class="tbl" style="margin-top:6px">${props.map(p => `<tr><td>${esc(p.name)}<br><span class="dim">${esc(p.detail)}</span></td><td class="${p.ok ? 'pos' : 'neg'}" style="font-weight:600">${p.ok ? 'Pass' : 'Fail'}</td></tr>`).join('')}</table></div></div>
+      <div class="panel"><h2>Method</h2><ol class="steps">${method.map(m => `<li>${esc(m)}</li>`).join('')}</ol><p class="dim" style="margin-top:8px">Engine v${Q.version}. Company records carry an as-of date; elasticities marked estimated come from filings, those marked disclosed from the company’s own sensitivity tables.</p></div>`;
+  }
+
+  // ------------------------------------------------------------------ render and events
+  const VIEWS = { overview, events, companies, engine };
+  function render() { chrome(); $('#view').innerHTML = VIEWS[T.view](); }
+  document.addEventListener('click', e => {
+    const t = e.target.closest('[data-view],[data-ind],[data-cat],[data-sel],[data-open],[data-co],[data-pick]'); if (!t) return;
+    if (t.dataset.view) { T.view = t.dataset.view; render(); window.scrollTo(0, 0); return; }
+    if (t.dataset.ind !== undefined && t.classList.contains('chip')) { T.inds.has(t.dataset.ind) ? T.inds.delete(t.dataset.ind) : T.inds.add(t.dataset.ind); render(); return; }
+    if (t.dataset.cat !== undefined && t.classList.contains('chip')) { T.cats.has(t.dataset.cat) ? T.cats.delete(t.dataset.cat) : T.cats.add(t.dataset.cat); render(); return; }
+    if (t.dataset.cat !== undefined && t.classList.contains('cell')) { T.cats = new Set([t.dataset.cat]); T.inds = new Set([t.dataset.ind]); T.view = 'events'; render(); window.scrollTo(0, 0); return; }
+    if (t.dataset.sel) { T.sel = t.dataset.sel; T.coOpen = null; document.querySelectorAll('.ev').forEach(el => el.classList.toggle('sel', el.dataset.sel === T.sel)); $('#detail').innerHTML = detail(E.find(x => x.id === T.sel)); if (window.innerWidth < 1100) $('#detail').scrollIntoView({ block: 'start', behavior: 'smooth' }); return; }
+    if (t.dataset.open) { T.sel = t.dataset.open; T.coOpen = null; T.view = 'events'; T.window = 'all'; T.inds.clear(); T.cats.clear(); T.q = ''; render(); window.scrollTo(0, 0); return; }
+    if (t.dataset.co) { T.coOpen = T.coOpen === t.dataset.co ? null : t.dataset.co; $('#detail').innerHTML = detail(E.find(x => x.id === T.sel)); return; }
+    if (t.dataset.pick) { T.co = t.dataset.pick; render(); return; }
+  });
+  document.addEventListener('change', e => { if (e.target.id === 'win') { T.window = e.target.value; render(); } });
+  let qt; document.addEventListener('input', e => { if (e.target.id === 'q') { clearTimeout(qt); const v = e.target.value; qt = setTimeout(() => { T.q = v; const pos = e.target.selectionStart; render(); const q = $('#q'); if (q) { q.focus(); q.setSelectionRange(pos, pos); } }, 250); } });
+  document.addEventListener('mousemove', e => { const r = e.target.closest && e.target.closest('#tl rect[data-w]'); const tip = $('#tip'); if (!r) { tip.hidden = true; return; } const k = Number(r.dataset.w); const d = T._weeks[k], s = T._stacks[k]; const parts = CATS.filter(c => s[c]).map(c => `${c}: ${s[c]}`); tip.innerHTML = `<b>Week of ${fmtD(d)}</b><br>${parts.length ? parts.join('<br>') : 'No events'}`; tip.hidden = false; tip.style.left = Math.min(window.innerWidth - 270, e.clientX + 12) + 'px'; tip.style.top = (e.clientY + 12) + 'px'; });
+  render();
+  // warm the summary cache in the background so the Events view opens without a pause
+  let wi = 0; const warm = () => { const t0 = Date.now(); while (wi < E.length && Date.now() - t0 < 40) summary(E[wi++]); if (wi < E.length) setTimeout(warm, 30); }; setTimeout(warm, 300);
+})();
+});
+</script>
+
+</body>
+</html>

@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How Jagran Orbit works</title>
+<style>
+  :root{
+    --ink:#10243b; --muted:#51657a; --line:#c9d5e2; --bg:#f4f7fb;
+    --c1:#e8f1ff; --c1s:#3d7bd9;
+    --c2:#fff3dc; --c2s:#e29a1a;
+    --c3:#e7f6ec; --c3s:#2f9a57;
+    --c4:#efe9ff; --c4s:#7a55d6;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 "Segoe UI",system-ui,-apple-system,Arial,sans-serif}
+  .page{max-width:1480px;margin:0 auto;padding:36px 36px 40px}
+  h1{margin:0;font-size:34px;letter-spacing:-.5px}
+  .sub{margin:6px 0 26px;color:var(--muted);font-size:18px;max-width:980px}
+
+  .flow{display:grid;grid-template-columns:1fr 44px 1.25fr 44px 1fr 44px 1.15fr;align-items:stretch}
+  .arrow{display:flex;align-items:center;justify-content:center}
+  .arrow svg{width:36px;height:36px}
+
+  .stage{border-radius:16px;padding:18px 18px 20px;border:2px solid;display:flex;flex-direction:column;gap:12px;background:#fff}
+  .s1{border-color:var(--c1s);background:var(--c1)}
+  .s2{border-color:var(--c2s);background:var(--c2)}
+  .s3{border-color:var(--c3s);background:var(--c3)}
+  .s4{border-color:var(--c4s);background:var(--c4)}
+  .tag{display:inline-flex;align-items:center;gap:10px;font-weight:700;font-size:13px;letter-spacing:.9px;text-transform:uppercase}
+  .num{width:30px;height:30px;border-radius:50%;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:16px;letter-spacing:0}
+  .s1 .num{background:var(--c1s)} .s2 .num{background:var(--c2s)} .s3 .num{background:var(--c3s)} .s4 .num{background:var(--c4s)}
+  .stage h2{margin:0;font-size:22px;line-height:1.2}
+  .why{margin:0;color:var(--muted);font-size:15px}
+
+  .box{background:#fff;border:1.5px solid var(--line);border-radius:12px;padding:11px 13px;font-size:15px}
+  .box b{display:block;margin-bottom:2px}
+  .box small{color:var(--muted);font-size:13.5px;display:block}
+  .down{align-self:center;color:#6b7f95;font-size:20px;line-height:1;margin:-4px 0}
+  .stat{display:flex;gap:8px;flex-wrap:wrap}
+  .pill{background:#fff;border:1.5px solid var(--line);border-radius:999px;padding:4px 11px;font-size:13.5px;font-weight:600}
+  .pill i{font-style:normal;color:var(--muted);font-weight:500}
+
+  .keep{border-style:dashed;background:#fffdf6}
+  .drop{background:#fff5f2;border-color:#f1b8a8}
+  .topics{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+  .topics span{background:#fff;border:1px solid #f0cf94;border-radius:8px;padding:2px 8px;font-size:13px}
+
+  .funnel{display:flex;flex-direction:column;gap:6px;margin-top:2px}
+  .bar{height:30px;border-radius:8px;background:#f6c978;color:#4a3300;font-weight:700;font-size:14px;display:flex;align-items:center;padding:0 12px;white-space:nowrap}
+
+  .band{margin-top:22px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+  .note{background:#fff;border:1.5px solid var(--line);border-radius:14px;padding:14px 16px}
+  .note h3{margin:0 0 4px;font-size:16px}
+  .note p{margin:0;color:var(--muted);font-size:15px}
+  .analogy{margin-top:22px;background:var(--ink);color:#fff;border-radius:14px;padding:16px 22px;font-size:18px}
+  .analogy b{color:#ffd58a}
+  .foot{margin-top:14px;color:var(--muted);font-size:13px}
+</style>
+</head>
+<body>
+<div class="page">
+  <h1>How Jagran Orbit works</h1>
+  <p class="sub">It reads the daily business news, spots the stories that change a small business's costs or sales, and tells the owner what that means in rupees and what to do next.</p>
+
+  <div class="flow">
+    <!-- 1 -->
+    <section class="stage s1">
+      <span class="tag"><span class="num">1</span>Collect</span>
+      <h2>Business news comes in</h2>
+      <p class="why">Jagran's business articles are kept in a database.</p>
+      <div class="box"><b>Jagran Biz articles</b><small>Headline, summary, date and section for every story</small></div>
+      <div class="stat">
+        <span class="pill">35,235 <i>articles stored</i></span>
+        <span class="pill">10,670 <i>translated to English</i></span>
+      </div>
+      <div class="box"><b>Only English articles are read</b><small>The rest are left alone</small></div>
+    </section>
+
+    <div class="arrow"><svg viewBox="0 0 36 36" fill="none" stroke="#6b7f95" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18h22M20 9l9 9-9 9"/></svg></div>
+
+    <!-- 2 -->
+    <section class="stage s2">
+      <span class="tag"><span class="num">2</span>Understand</span>
+      <h2>The "reading" pipeline sorts the news</h2>
+      <p class="why">Runs automatically in about 3 seconds. Like a trained analyst with a checklist.</p>
+
+      <div class="box drop"><b>A. Throw away the noise</b><small>Share-price chatter, stock tips, IPOs, personal finance, mutual funds, insurance</small></div>
+      <div class="down">&#8595;</div>
+      <div class="box keep"><b>B. Spot stories that move business costs</b>
+        <small>About 30 topics are watched, for example:</small>
+        <div class="topics"><span>Crude oil</span><span>Petrol and diesel</span><span>Steel</span><span>Interest rates</span><span>Rupee</span><span>US tariffs</span><span>Work visas</span><span>Drug prices</span><span>Shipping routes</span></div>
+      </div>
+      <div class="down">&#8595;</div>
+      <div class="box"><b>C. Work out what happened</b><small>Did it go up or down? By how much? Which industries does it touch?</small></div>
+      <div class="down">&#8595;</div>
+      <div class="box"><b>D. Merge repeat coverage into one event</b><small>Many articles about the same oil-price jump become a single event</small></div>
+
+      <div class="funnel">
+        <div class="bar" style="width:100%">9,731 articles read</div>
+        <div class="bar" style="width:62%">883 relevant</div>
+        <div class="bar" style="width:34%;background:#e29a1a;color:#fff">340 events</div>
+      </div>
+    </section>
+
+    <div class="arrow"><svg viewBox="0 0 36 36" fill="none" stroke="#6b7f95" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18h22M20 9l9 9-9 9"/></svg></div>
+
+    <!-- 3 -->
+    <section class="stage s3">
+      <span class="tag"><span class="num">3</span>Store</span>
+      <h2>Results are saved in the database</h2>
+      <p class="why">So every screen shows the same, consistent picture.</p>
+      <div class="box"><b>Events</b><small>What happened, when, how big, which articles back it up</small></div>
+      <div class="box"><b>Each owner's workspace</b><small>Chosen industry, business numbers, to-do actions</small></div>
+      <div class="box"><b>Update history</b><small>Every refresh is recorded, so a bad one can never replace good data</small></div>
+      <div class="box keep"><b>Refreshing is safe</b><small>The new version goes live only when it is complete. If a refresh finds nothing, the old version stays.</small></div>
+    </section>
+
+    <div class="arrow"><svg viewBox="0 0 36 36" fill="none" stroke="#6b7f95" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18h22M20 9l9 9-9 9"/></svg></div>
+
+    <!-- 4 -->
+    <section class="stage s4">
+      <span class="tag"><span class="num">4</span>Use</span>
+      <h2>The owner sees what it means for them</h2>
+      <p class="why">A website the owner opens in the browser.</p>
+      <div class="box"><b>Owner picks an industry and enters their numbers</b><small>Monthly sales, profit margin, share of costs, loans</small></div>
+      <div class="down">&#8595;</div>
+      <div class="box"><b>The calculator estimates the impact</b><small>Runs thousands of what-if scenarios on those numbers and gives a likely range in rupees</small></div>
+      <div class="down">&#8595;</div>
+      <div class="box"><b>Owner gets</b>
+        <small>&bull; Ranked alerts in plain language<br>&bull; "What would this cost me?" planner<br>&bull; Suggested next steps and a to-do list</small></div>
+      <div class="box keep"><b>Analyst view for the team</b><small>All 340 events by industry, topic and week</small></div>
+    </section>
+  </div>
+
+  <div class="band">
+    <div class="note"><h3>It remembers the owner</h3><p>Changes are saved as soon as they are made, and come back on the next visit, even on a cleared browser.</p></div>
+    <div class="note"><h3>It keeps working if the server is down</h3><p>The page falls back to a saved copy of the news and the owner's last numbers, then catches up when the server returns.</p></div>
+    <div class="note"><h3>It is a starting point, not advice</h3><p>Figures are what-if estimates from news and the owner's own inputs. They are not forecasts or professional advice.</p></div>
+  </div>
+
+  <div class="analogy"><b>In one line:</b> it is a newsroom analyst that reads every article, flags the ones that matter to your costs, and tells you what to do about them.</div>
+  <div class="foot">Numbers shown are from the current data: 35,235 stored articles, 10,670 in English, 9,731 after removing personal-finance sections, 883 relevant, 340 events.</div>
+</div>
+</body>
+</html>

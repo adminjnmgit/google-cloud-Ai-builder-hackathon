@@ -1,0 +1,164 @@
+{
+  "meta": {
+    "reports": 3,
+    "considered": 3,
+    "classified": 3,
+    "machineTranslated": 0,
+    "events": 3,
+    "first": "2026-09-01 09:00:00",
+    "last": "2026-10-01 10:00:00",
+    "industries": [
+      "Automotive",
+      "Energy",
+      "Banking",
+      "Pharma",
+      "Technology",
+      "FMCG & Food",
+      "Agriculture",
+      "Real Estate",
+      "Cement & Infra",
+      "Metals & Mining",
+      "Aviation & Travel",
+      "Telecom & Media",
+      "Retail & E-commerce",
+      "Consumer Durables",
+      "Gems & Jewellery"
+    ],
+    "categories": [
+      "Supply disruption",
+      "Commodity shock",
+      "Regulation",
+      "Trade restriction",
+      "Interest-rate change",
+      "Geopolitical event",
+      "Demand shock"
+    ],
+    "types": {
+      "Biz News": 3
+    }
+  },
+  "events": [
+    {
+      "var": "drug_price",
+      "topic": "",
+      "index": false,
+      "label": "Drug price control",
+      "unit": "%",
+      "hit": 0.74,
+      "cats": [
+        "Regulation"
+      ],
+      "inds": [
+        "Pharma"
+      ],
+      "dir": -1,
+      "mag": 5.0,
+      "extracted": true,
+      "nExtracted": 1,
+      "nFacts": 1,
+      "first": "2026-10-01 10:00",
+      "last": "2026-10-01 10:00",
+      "count": 1,
+      "rep": "NPPA cuts drug prices by 5% on a set of essential medicines",
+      "repSummary": "The regulator notified a price reduction.",
+      "level": null,
+      "reports": [
+        {
+          "sl": 2,
+          "date": "2026-10-01 10:00",
+          "type": "Biz News",
+          "headline": "NPPA cuts drug prices by 5% on a set of essential medicines",
+          "summary": "The regulator notified a price reduction.",
+          "mag": 5.0,
+          "dir": -1,
+          "outlook": false,
+          "level": null
+        }
+      ],
+      "id": "E0001"
+    },
+    {
+      "var": "crude",
+      "topic": "",
+      "index": false,
+      "label": "Crude oil price",
+      "unit": "%",
+      "hit": 0.7,
+      "cats": [
+        "Supply disruption",
+        "Commodity shock",
+        "Geopolitical event"
+      ],
+      "inds": [
+        "Energy",
+        "Aviation & Travel"
+      ],
+      "dir": 1,
+      "mag": 8.0,
+      "extracted": true,
+      "nExtracted": 1,
+      "nFacts": 1,
+      "first": "2026-10-01 09:00",
+      "last": "2026-10-01 09:00",
+      "count": 1,
+      "rep": "Brent crude surges 8% as Hormuz tensions rise",
+      "repSummary": "Oil prices jumped after shipping risk rose.",
+      "level": null,
+      "reports": [
+        {
+          "sl": 1,
+          "date": "2026-10-01 09:00",
+          "type": "Biz News",
+          "headline": "Brent crude surges 8% as Hormuz tensions rise",
+          "summary": "Oil prices jumped after shipping risk rose.",
+          "mag": 8.0,
+          "dir": 1,
+          "outlook": false,
+          "level": null
+        }
+      ],
+      "id": "E0002"
+    },
+    {
+      "var": "rate",
+      "topic": "",
+      "index": false,
+      "label": "Policy repo rate",
+      "unit": "bps",
+      "hit": 0.72,
+      "cats": [
+        "Interest-rate change"
+      ],
+      "inds": [
+        "Automotive",
+        "Banking",
+        "Real Estate"
+      ],
+      "dir": -1,
+      "mag": 25.0,
+      "extracted": true,
+      "nExtracted": 1,
+      "nFacts": 1,
+      "first": "2026-09-01 09:00",
+      "last": "2026-09-01 09:00",
+      "count": 1,
+      "rep": "RBI cuts repo rate by 25 bps to boost lending",
+      "repSummary": "The policy rate was reduced.",
+      "level": null,
+      "reports": [
+        {
+          "sl": 3,
+          "date": "2026-09-01 09:00",
+          "type": "Biz News",
+          "headline": "RBI cuts repo rate by 25 bps to boost lending",
+          "summary": "The policy rate was reduced.",
+          "mag": 25.0,
+          "dir": -1,
+          "outlook": false,
+          "level": null
+        }
+      ],
+      "id": "E0003"
+    }
+  ]
+}

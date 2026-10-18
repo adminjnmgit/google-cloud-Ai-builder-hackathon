@@ -1,0 +1,38 @@
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+extend-exclude = [".venv", ".venv-translate", "instance"]
+
+[tool.ruff.lint]
+select = [
+    "E", "W",   # pycodestyle
+    "F",        # pyflakes
+    "I",        # import order
+    "B",        # bugbear: likely bugs
+    "UP",       # modern Python syntax
+    "SIM",      # simplifications
+    "C4",       # comprehensions
+    "PT",       # pytest style
+    "RUF",      # ruff-specific
+]
+ignore = [
+    "RUF012",   # mutable class attributes: SQLAlchemy __table_args__ are not meant to be annotated
+    "C408",     # dict(a=1) reads better than {'a': 1} for the pipeline's records
+]
+
+[tool.ruff.lint.per-file-ignores]
+# The lexicon is data: long regular expressions are clearer on one line than wrapped.
+"orbit/pipeline/lexicon.py" = ["E501", "RUF001", "RUF003"]
+"orbit/pipeline/extract.py" = ["RUF001", "RUF003"]
+"migrations/**" = ["E501", "I001", "UP007"]
+"tests/**" = ["E501"]
+
+[tool.ruff.format]
+quote-style = "single"
+exclude = ["migrations/versions/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-q"
+filterwarnings = ["error::sqlalchemy.exc.SAWarning"]
