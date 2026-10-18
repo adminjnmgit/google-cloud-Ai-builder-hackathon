@@ -128,11 +128,14 @@ class AiConfig:
         project = _text(env, 'GCP_PROJECT') or _text(env, 'GOOGLE_CLOUD_PROJECT')
         api_key = _text(env, 'GEMINI_API_KEY') or _text(env, 'GOOGLE_API_KEY')
         enabled = _flag(env, 'ORBIT_AI_ENABLED') and bool(project or api_key)
+        # Vertex serves the newest Gemini models from the `global` endpoint, not every region.
+        # ORBIT_VERTEX_LOCATION overrides; otherwise we use `global` regardless of where the data lives.
+        location = _text(env, 'ORBIT_VERTEX_LOCATION') or 'global'
         return cls(
             enabled=enabled,
             project=project,
             api_key=api_key,
-            location=_text(env, 'GCP_LOCATION', 'asia-south1'),
+            location=location,
             flash_model=_text(env, 'ORBIT_GEMINI_FLASH_MODEL', 'gemini-3.8-flash'),
             lite_model=_text(env, 'ORBIT_GEMINI_LITE_MODEL', 'gemini-3.5-flash-lite'),
             pro_model=_text(env, 'ORBIT_GEMINI_PRO_MODEL', 'gemini-3.1-pro-preview'),
